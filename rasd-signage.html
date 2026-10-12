@@ -162,6 +162,9 @@ body{
 .side-item .si-mark{color:var(--gold-light);font-size:1.5vh;line-height:1.7;flex-shrink:0;}
 .side-item .si-body{flex:1;min-width:0;}
 .side-item .si-src{font-size:2vh;font-weight:700;color:var(--gold-light);margin-bottom:0.6vh;}
+.side-item .si-src{display:flex;align-items:center;gap:0.5vw;direction:rtl;}
+.side-item .si-src .flag{margin-left:0;}
+.side-item .si-src .si-np{unicode-bidi:isolate;}
 .side-item .si-title{font-size:2.5vh;font-weight:700;line-height:1.45;color:#fff;}
 /* الخبر المعروض الآن — بطاقة ذهبية + سهم يشير للمقال */
 .side-item.on{
@@ -447,7 +450,7 @@ function renderSide(){
     d.className = 'side-item' + (i===idx?' on':'');
     d.style.animationDelay = (i*0.06)+'s';   // دخول متدرّج
     d.innerHTML = '<div class="si-body">'
-                +   '<div class="si-src">'+flagImg(n.country)+(n.newspaper||'')+' · '+(n.country||'')+'</div>'
+                +   '<div class="si-src">'+flagImg(n.country)+'<bdi class="si-np">'+(n.newspaper||'')+'</bdi><span class="si-sep">·</span><bdi>'+(n.country||'')+'</bdi></div>'
                 +   '<div class="si-title">'+(n.title||'')+'</div>'
                 + '</div>';
     box.appendChild(d);
