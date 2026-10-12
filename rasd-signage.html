@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>راصد الأخبار الضريبية — شاشة العرض</title>
+<style>
+@font-face { font-family:'Lusail'; src:url('Lusail__Regular.otf') format('opentype'); font-weight:400; }
+@font-face { font-family:'Lusail'; src:url('Lusail__Bold.otf') format('opentype'); font-weight:700; }
+@font-face { font-family:'Lusail'; src:url('Lusail__Black.otf') format('opentype'); font-weight:900; }
+
+:root{
+  --crimson:#BA1538;
+  --crimson-dark:#7a0e24;
+  --gold:#A29475;
+  --gold-light:#c4b89a;
+  --gold-dark:#8a7550;
+  --navy:#0D4261;
+  --teal:#009C80;
+  --cream:#f7f5f1;
+  --white:#fff;
+}
+*{margin:0;padding:0;box-sizing:border-box;font-variant-numeric:lining-nums;}
+html,body{height:100%;overflow:hidden;}
+body{
+  font-family:'Lusail',sans-serif;
+  background:
+    radial-gradient(circle at 85% 12%, rgba(162,148,117,0.16), transparent 45%),
+    linear-gradient(135deg,#06496b 0%, #04344c 55%, #021e2c 100%);
+  color:#fff;
+  display:flex;
+  flex-direction:column;
+  height:100vh;
+  width:100vw;
+}
+
+/* ============ الهيدر ============ */
+.topbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  border-bottom:5px solid var(--gold);
+  background:#032a3d;   /* أغمق قليلاً من الخلفية · بدون تدرّج ذهبي */
+  flex-shrink:0;
+  padding:0 3vw;
+}
+.brand-title{
+  display:flex;flex-direction:column;justify-content:center;
+  padding:4vh 0;   /* ارتفاع ومساحات سلبية */
+}
+.brand-title h1{font-size:4.8vh;font-weight:900;line-height:1.1;letter-spacing:0.05vw;}
+.brand-sub{font-size:2vh;color:var(--gold-light);font-weight:400;margin-top:0.8vh;}
+/* شارة «مباشر» */
+.live-badge{
+  display:flex;align-items:center;gap:0.7vw;
+  background:rgba(162,148,117,0.18);border:1.5px solid var(--gold);
+  border-radius:6vh;padding:1.2vh 2vw;
+}
+.live-badge .live-dot{
+  width:1.4vh;height:1.4vh;border-radius:50%;background:#25d366;
+  box-shadow:0 0 0 0 rgba(37,211,102,.7);animation:pulse 1.8s infinite;
+}
+.live-badge .live-txt{font-size:2.1vh;font-weight:900;color:var(--gold-light);}
+@keyframes pulse{
+  0%{box-shadow:0 0 0 0 rgba(37,211,102,.6);}
+  70%{box-shadow:0 0 0 1.5vh rgba(37,211,102,0);}
+  100%{box-shadow:0 0 0 0 rgba(37,211,102,0);}
+}
+
+/* ============ المحتوى ============ */
+.main{
+  flex:1;
+  display:grid;
+  grid-template-columns:1.32fr 1.9fr;   /* العناوين يمين (أوسع قليلاً) · الخبر الكبير يسار */
+  gap:1.6vw;
+  padding:2.2vh 2.4vw;
+  min-height:0;
+}
+
+/* الخبر الرئيسي (يتدور تلقائياً) */
+.feature{
+  background:#fff;color:#1a1a1a;
+  border-radius:1.4vh;
+  padding:3.4vh 3vw;
+  display:flex;flex-direction:column;
+  position:relative;overflow:hidden;
+  box-shadow:0 2vh 5vh rgba(0,0,0,0.35);
+}
+.feature .meta{display:flex;align-items:center;gap:1vw;margin-bottom:2.2vh;flex-wrap:wrap;}
+.cat-badge{
+  font-size:1.7vh;font-weight:700;padding:0.7vh 1.4vw;border-radius:3vh;color:#fff;
+}
+.c-qa{background:var(--crimson-dark);}
+.c-eg{background:var(--navy);}
+.c-ae{background:var(--teal);}
+.c-sa{background:var(--gold-dark);}
+.c-other{background:#555;}
+.source-name{font-size:1.9vh;font-weight:700;color:var(--gold-dark);}
+.counter{font-size:1.7vh;color:#888;margin-right:auto;}
+.feature h2{
+  font-size:4.6vh;font-weight:900;line-height:1.3;color:#111;
+  margin-bottom:2.4vh;
+}
+.feature .excerpt{
+  font-size:2.3vh;line-height:1.75;color:#444;font-weight:400;
+  flex:1;
+}
+.feature .foot{
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:2vh 2vw;
+  margin-top:2vh;padding-top:2vh;border-top:2px solid #eee;
+}
+.feature .foot .lang-tag{font-size:1.6vh;font-weight:700;color:#999;letter-spacing:0.15vw;white-space:nowrap;}
+.progress{height:0.6vh;background:#eee;border-radius:1vh;overflow:hidden;width:14vw;}
+.progress span{display:block;height:100%;background:var(--crimson);width:0;}
+/* QR */
+.qr-wrap{display:flex;align-items:center;gap:1vw;}
+.qr-box{background:#fff;padding:0.8vh;border-radius:1vh;width:13.5vh;height:13.5vh;
+  border:1px solid #eee;flex-shrink:0;}
+.qr-box img,.qr-box canvas{width:100%!important;height:100%!important;display:block;}
+.qr-cap{font-size:2.1vh;font-weight:700;color:var(--gold-dark);line-height:1.4;max-width:14vw;}
+.foot-right{display:flex;flex-direction:column;align-items:flex-end;gap:1.2vh;flex-shrink:0;}
+
+/* قائمة الأخبار الجانبية */
+.sidelist{display:flex;flex-direction:column;min-height:0;}
+.side-head{
+  display:flex;align-items:center;gap:0.8vw;
+  font-size:2.2vh;font-weight:900;color:var(--gold-light);
+  margin-bottom:1.4vh;padding-bottom:1.2vh;
+  border-bottom:2px solid rgba(162,148,117,0.4);
+}
+.side-head .globe{width:2.9vh;height:2.9vh;flex-shrink:0;display:block;}
+.side-items{
+  display:flex;flex-direction:column;gap:1.1vh;flex:1;
+  overflow-y:auto;overflow-x:hidden;scroll-behavior:smooth;
+  padding:0.6vh 2vh 0.6vh 1.8vh;   /* مساحة يمين لطرف البطاقة المكبّرة + يسار للسهم */
+}
+.side-items{scrollbar-width:none;}
+.side-items::-webkit-scrollbar{display:none;}
+/* الحاوية: الشريط المؤشر + العناوين */
+.side-body{display:flex;gap:1vw;flex:1;min-height:0;}
+.rail{position:relative;width:0.5vh;background:rgba(255,255,255,0.12);
+  border-radius:1vh;flex-shrink:0;margin:1.2vh 0;}
+.rail-dot{position:absolute;left:50%;top:0;transform:translate(-50%,-50%) rotate(45deg);
+  width:1.7vh;height:1.7vh;background:var(--gold);border-radius:2px;
+  box-shadow:0 0.3vh 0.9vh rgba(0,0,0,0.35);
+  transition:top .6s cubic-bezier(.22,.61,.36,1);}
+.side-item{
+  display:flex;align-items:flex-start;gap:0.8vw;
+  /* زجاجية */
+  background:rgba(255,255,255,0.07);
+  backdrop-filter:blur(9px) saturate(140%);
+  -webkit-backdrop-filter:blur(9px) saturate(140%);
+  border:1px solid rgba(255,255,255,0.14);
+  border-radius:1.5vh;
+  padding:1.5vh 1.3vw;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.10), 0 6px 18px rgba(0,0,0,0.18);
+  transition:transform .4s cubic-bezier(.22,.61,.36,1), background .4s ease, box-shadow .4s ease, border-color .4s ease;
+  animation:itemIn .5s cubic-bezier(.22,.61,.36,1) both;
+}
+/* العلامة بجانب كل عنوان (بدل الأقواس) */
+.side-item .si-mark{color:var(--gold-light);font-size:1.5vh;line-height:1.7;flex-shrink:0;}
+.side-item .si-body{flex:1;min-width:0;}
+.side-item .si-src{font-size:1.65vh;font-weight:700;color:var(--gold-light);margin-bottom:0.6vh;}
+.side-item .si-title{font-size:2.15vh;font-weight:700;line-height:1.45;color:#fff;}
+/* الخبر المعروض الآن — بطاقة ذهبية + سهم يشير للمقال */
+.side-item.on{
+  position:relative;
+  background:linear-gradient(90deg,var(--gold-light) 0%,var(--gold) 100%);
+  transform:scale(1.04);
+  box-shadow:0 1.2vh 3vh rgba(0,0,0,0.35), 0 0 2.6vh rgba(196,184,154,0.4);
+}
+/* سهم بنهاية المستطيل يشير للمقال (يسار) — بلون طرف البطاقة نفسه */
+.side-item.on::after{
+  content:'';position:absolute;top:50%;left:-1vh;transform:translateY(-50%);
+  border-top:1vh solid transparent;border-bottom:1vh solid transparent;
+  border-right:1.1vh solid var(--gold-light);
+}
+.side-item.on .si-mark{color:var(--crimson-dark);}
+.side-item.on .si-src{color:var(--crimson-dark);}
+.side-item.on .si-title{color:#2a1206;}
+/* أعلام الدول — مستطيل كامل بعرض ثابت (بدون قص · يستوعب نِسَب مختلفة مثل قطر) */
+.flag{width:3vh;height:auto;border-radius:3px;vertical-align:middle;
+  margin-left:0.5vw;box-shadow:0 0 0 1px rgba(255,255,255,0.3);}
+.cat-badge .flag{width:3.6vh;margin-left:0.6vw;box-shadow:0 0 0 1px rgba(255,255,255,0.55);}
+
+/* أنيميشن */
+@keyframes itemIn{from{opacity:0;translate:0 1.3vh;}to{opacity:1;translate:0 0;}}
+@keyframes fadeSlideUp{from{opacity:0;transform:translateY(1.8vh);}to{opacity:1;transform:translateY(0);}}
+.reveal{animation:fadeSlideUp .6s cubic-bezier(.22,.61,.36,1) both;animation-delay:var(--d,0s);}
+</style>
+</head>
+<body>
+
+  <!-- ===== الهيدر ===== -->
+  <header class="topbar">
+    <div class="brand-title">
+      <h1>التقرير الإعلامي اليومي</h1>
+      <div class="brand-sub">رصد إعلامي يومي للأخبار المتعلقة بالضرائب</div>
+    </div>
+    <div class="live-badge">
+      <span class="live-dot"></span>
+      <span class="live-txt">مباشر</span>
+    </div>
+  </header>
+
+  <!-- ===== المحتوى ===== -->
+  <div class="main">
+    <!-- القائمة الجانبية (يمين) -->
+    <aside class="sidelist">
+      <div class="side-head">
+        <svg class="globe" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round">
+          <circle cx="12" cy="12" r="9.2"/>
+          <ellipse cx="12" cy="12" rx="4" ry="9.2"/>
+          <line x1="2.8" y1="12" x2="21.2" y2="12"/>
+          <path d="M5 6.6 H19 M5 17.4 H19"/>
+        </svg>
+        عناوين اليوم
+      </div>
+      <div class="side-body">
+        <div class="rail"><span class="rail-dot" id="railDot"></span></div>
+        <div class="side-items" id="sideItems"></div>
+      </div>
+    </aside>
+
+    <!-- الخبر الرئيسي (يسار) -->
+    <section class="feature">
+      <div class="meta">
+        <span class="cat-badge c-qa" id="fCountry">—</span>
+        <span class="source-name" id="fSource">—</span>
+        <span class="counter" id="fCounter">—</span>
+      </div>
+      <h2 id="fTitle">جارٍ تحميل الأخبار…</h2>
+      <p class="excerpt" id="fExcerpt"></p>
+      <div class="foot">
+        <div class="qr-wrap">
+          <div class="qr-box" id="qrBox"></div>
+          <span class="qr-cap">امسح الرمز لقراءة<br>الخبر كاملاً</span>
+        </div>
+        <div class="foot-right">
+          <span class="lang-tag" id="fReportDate"></span>
+          <div class="progress"><span id="fBar"></span></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+<!-- مكتبة توليد QR — تعمل محلياً في المتصفح، بدون أي نداء خارجي -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+/* ==========================================================================
+   مصدر البيانات — endpoint عام (بدون تسجيل دخول على الشاشة)
+   --------------------------------------------------------------------------
+   الشاشة تقرأ من endpoint عام يرجّع JSON بالشكل:
+     { data: [ { text, country, newspaper, description, source } ], updatedAt }
+   وهذا الـ endpoint (كود منفصل على السيرفر) هو اللي يقرأ قائمة SharePoint
+   "DailyReportAR" عبر Microsoft Graph — انظر ملف api-signage-tax-route.ts
+   بيانات الاعتماد تبقى على السيرفر فقط ولا تصل الشاشة إطلاقاً.
+
+   غيّر FEED_URL لرابط الـ endpoint بعد نشره (مثال: /api/signage/tax أو رابط كامل).
+   ========================================================================== */
+const FEED_URL = "tax.json";  // ← ملف عام بنفس مجلد الصفحة (ينشره/يحدّثه Power Automate)
+
+// عيّنة حقيقية من تقرير 15/09/2026 (احتياطية عند فتح الملف محلياً بدون جلسة)
+const SAMPLE = {
+  PublishDate: "2026-09-15T07:42:45Z",
+  Details: [
+    {TitleAR:"فرص وظيفية بهيئة الضرائب عبر ((كوادر))",CountryAR:"دولة قطر",NewPaperAR:"الراية",Source:"https://monitoring.elite-qatar.net/article/?qk=IChbYWelOtMqlO0gnEozuFBe%2B6oxNNnYMdjm3qzZog4bTd3WQbEw4MimJQvzRwTRBkNtsRSUviDEL0daSDRwEu%2F45un025G%2BnFErpdwJQ%2BkRVTGyiSQPV%2B%2FKrT3LoOxT&id=54785978&slng=en",DescAR:"أعلن ديوان الخدمة المدنية والتطوير الحكومي، بالتنسيق مع الهيئة العامة للضرائب، عن طرح مجموعة من الفرص الوظيفية التخصصية عبر المنصة الموحدة للتوظيف والتطوير المهني «كوادر»، وذلك لحملة درجة البكالوريوس في عدد من التخصصات المطلوبة. تشمل الفرص الوظيفية المطروحة تخصصات المحاسبة والمالية ونظم المعلومات وعلوم الحاسب."},
+    {TitleAR:"توحيد إجراءات التسجيل تدشين ((دار الشركات))",CountryAR:"دولة قطر",NewPaperAR:"الوطن",Source:"https://monitoring.elite-qatar.net/article/?qk=ZVZj6YXUfUMCPfIYZqr8MbjNsPBQHn%2FsDR6HEhrrmsbt8MCMdCUGRgENsoHLpYzzve%2BKuU7EdijyyGlpK23GhxO%2FzyGQ9DqW11yje%2BaJo%2BgFpXZP1Hf1Ya8IhUi2MRfY&id=54786451&slng=en",DescAR:"دشن سعادة الشيخ فيصل بن ثاني بن فيصل آل ثاني، وزير التجارة والصناعة ورئيس المجلس الاستشاري لدار الشركات، أمس، ((دار الشركات))، وهي جهة تختص بتسجيل الشركات وترخيصها في المناطق الاقتصادية في دولة قطر، تعمل بهدف توحيد إجراءات التسجيل والترخيص في هذه المناطق."},
+    {TitleAR:"«مورو» تطلق «الفوترة الإلكترونية»",CountryAR:"الإمارات العربية المتحدة",NewPaperAR:"الامارات اليوم",Source:"https://monitoring.elite-qatar.net/article/?qk=%2BHlnr2kmwL0Q8rfDt440g1z5FREMR8fgyL9v6Q1aE5moFWPni16YCQCthT%2BkvSzGLz2EivLT32P1MhhdqJcFAk0tI4g9LsiQjm5LasEcQICzw1BWHExyN9NS6Ch0WQZi&id=54791559&slng=en",DescAR:"أطلق مركز البيانات للحلول المتكاملة (مورو)، التابع لـ«ديوا الرقمية»، خدمة «الفوترة الإلكترونية»، لتمكين المؤسسات الحكومية والخاصة من إدارة الفواتير الإلكترونية المهيكلة ضمن بيئة رقمية آمنة ومتوافقة وقابلة للتوسع، بما يدعم الامتثال التنظيمي، ويعزز كفاءة الأعمال."},
+    {TitleAR:"«الاتحادية للضرائب» تعقد ملتقى الوكلاء الضريبيين لعام 2026",CountryAR:"الإمارات العربية المتحدة",NewPaperAR:"الاتحاد",Source:"https://monitoring.elite-qatar.net/article/?qk=7mFOdGJJ6%2B2gz1fCDDagkH8ZpDGmLO0wU4F8M1jsHrm9HiM6hB0yav2aiE%2BB6BFj9gxw4gRSt9yMkOkARZLGpodfcAs4d3qRovxKWI2IjsE%3D&id=54786809&slng=en",DescAR:"عقدت الهيئة الاتحادية للضرائب، «ملتقى الوكلاء الضريبيين 2026»، بهدف تعزيز التواصل مع الشركاء الاستراتيجيين وتعريفهم على آخر المستجدات في الساحة الضريبية، إضافةً إلى تسليط الضوء على قواعد ودور ومهام الوكلاء الضريبيين باعتبارهم أحد المكونات الأساسية في منظومة العمل الضريبي."},
+    {TitleAR:"الضرائب: إنشاء وحدة محايدة لتسعير المعاملات تتوافق مع الاتفاقيات الدولية",CountryAR:"مصر",NewPaperAR:"youm7",Source:"https://monitoring.elite-qatar.net/article/?qk=iX4sg%2FrXJPwMoSOlEGIiv%2BkK2ZPL5DnkCXjNuilaATQMVeV7wKemBje7zDG91UXha5KElgeCYU00xBOhkcHdRCBBFm2wFdyIKOZY3sBhr6ifmyB1QUDChf0%2FG8C2k%2BVP&id=54791675&slng=en",DescAR:"نستهدف تحقيق الحياد التنافسي وتوحيد المعاملة الضريبية بين مختلف الكيانات والجهات، ونعمل على وضع الضوابط والمحددات اللازمة للصكوك الضريبية تمهيداً لطرحها خلال الفترة المقبلة. التسهيلات الضريبية ترسخ مفهوم الضرائب كشريك في نمو وتوسيع النشاط."},
+    {TitleAR:"اقتصاد الثقة.. ماذا وراء الصكوك الضريبية؟",CountryAR:"مصر",NewPaperAR:"youm7",Source:"https://monitoring.elite-qatar.net/article/?qk=qWtYdcQ%2B9obbIbtZTrRQ2RYDsJEuEy%2F2ApsHumcXYmK896jIO8a9yCsiQYgjUdJdmds4LDPoVIgyRhRvdEk5f7cmA%2Bu7K02SLn33LlMSUIwA2oeRFGGIfzKzkm1YW3I9&id=54790893&slng=en",DescAR:"فتحت الموافقة المعلنة على مقترح وزارة المالية بإصدار «صكوك ضريبية» باباً واسعاً للنقاش حول أبعاد هذه الأداة الجديدة وموقعها الحقيقي داخل خريطة السياسة المالية للدولة. تقوم الفكرة على اكتتاب الممولين في هذه الصكوك مقابل عائد مناسب، على أن تُخصم قيمتها وعوائدها لاحقاً من التزاماتهم الضريبية."},
+    {TitleAR:"5 حالات تقودك إلى تهمة التهرب الضريبي.. تعرف عليها",CountryAR:"مصر",NewPaperAR:"youm7",Source:"https://monitoring.elite-qatar.net/article/?qk=jkszlwpZZcwxpe1xAMRHHpyxty1GUuNsrZRQqYFbCPs2cNWdsK0AaHGkZKJ%2BXElQE3oY2UNPegx9UbfoT9VW5eOBKGxUNyxsdntyjs5uNUq00EKhmxW8f23t5Edr8dkQ&id=54791615&slng=en",DescAR:"حدد قانون الضريبة العقارية الصادر برقم 23 لسنة 2020 والمعدِّل للقانون القديم رقم 117 لسنة 2014، حالات التهرب من أداء الضريبة، والتي تمثلت في 5 حالات: تقديم أوراق أو مستندات غير صحيحة أو مزورة، وإبداء بيانات على غير الحقيقة عند المناقشة أمام اللجان."}
+  ]
+};
+
+let news = [];
+let reportDate = "";
+let idx = 0;
+const ROTATE_MS = 12000; // مدة عرض كل خبر رئيسي
+
+// لون شارة الدولة
+function countryClass(c){
+  if(!c) return 'c-other';
+  if(c.indexOf('قطر') > -1) return 'c-qa';
+  if(c.indexOf('مصر') > -1) return 'c-eg';
+  if(c.indexOf('الإمارات') > -1 || c.indexOf('الامارات') > -1) return 'c-ae';
+  if(c.indexOf('السعودية') > -1) return 'c-sa';
+  return 'c-other';
+}
+
+// خريطة اسم الدولة (عربي) → الرمز الدولي ISO — تعمل لأي دولة تلقائياً
+const ISO_MAP = [
+  ['qa',['قطر']], ['sa',['سعود']], ['ae',['إمارات','امارات']], ['kw',['كويت']],
+  ['bh',['بحرين']], ['om',['عمان','عُمان']], ['eg',['مصر']], ['jo',['أردن','اردن']],
+  ['lb',['لبنان']], ['sy',['سوري']], ['iq',['عراق']], ['ps',['فلسطين']],
+  ['ye',['يمن']], ['ly',['ليبيا']], ['tn',['تونس']], ['dz',['جزائر']], ['ma',['مغرب']],
+  ['mr',['موريتانيا']], ['sd',['سودان']], ['so',['صومال']], ['dj',['جيبوتي']], ['km',['القمر']],
+  ['tr',['تركي']], ['ir',['إيران','ايران']], ['gb',['بريطانيا','المملكة المتحدة']],
+  ['us',['أمريك','امريك','الولايات المتحدة']], ['fr',['فرنسا']], ['de',['ألمانيا','المانيا']],
+  ['cn',['الصين']], ['in',['الهند']], ['ru',['روسيا']], ['jp',['اليابان']], ['ca',['كندا']],
+  ['au',['أستراليا','استراليا']], ['es',['إسبانيا','اسبانيا']], ['it',['إيطاليا','ايطاليا']],
+  ['eu',['الأوروبي']], ['pk',['باكستان']], ['id',['إندونيسيا','اندونيسيا']], ['my',['ماليزيا']],
+  ['sg',['سنغافورة']], ['kr',['كوريا']], ['br',['البرازيل']], ['ch',['سويسرا']],
+  ['nl',['هولندا']], ['be',['بلجيكا']], ['se',['السويد']], ['no',['النرويج']],
+  ['dk',['دنمارك']], ['gr',['اليونان']], ['pt',['البرتغال']], ['at',['النمسا']],
+  ['az',['أذربيجان','اذربيجان']], ['th',['تايلاند']], ['ph',['الفلبين']], ['ng',['نيجيريا']],
+];
+function isoFor(c){
+  if(!c) return '';
+  for(const [iso,keys] of ISO_MAP){ for(const k of keys){ if(c.indexOf(k) > -1) return iso; } }
+  return '';
+}
+function flagImg(country){
+  const iso = isoFor(country);
+  if(!iso) return '';
+  return '<img class="flag" src="https://flagcdn.com/w40/'+iso+'.png" alt="">';
+}
+
+// فكّ رابط Outlook SafeLink للحصول على رابط المقال المباشر
+function unwrapSafe(u){
+  if(!u) return '';
+  try{
+    if(u.indexOf('safelinks.protection.outlook.com') > -1){
+      const real = new URL(u).searchParams.get('url');
+      if(real) return decodeURIComponent(real);
+    }
+  }catch(e){}
+  return u;
+}
+
+// توليد رمز QR لرابط الخبر (محلياً بالكامل)
+function renderQR(url){
+  const box = document.getElementById('qrBox');
+  box.innerHTML = '';
+  const target = url || 'https://www.gta.gov.qa';
+  if(window.QRCode){
+    new QRCode(box, { text: target, width:260, height:260,
+      colorDark:'#111', colorLight:'#fff', correctLevel: QRCode.CorrectLevel.M });
+  }
+}
+
+// توحيد شكل الخبر داخلياً: {title, country, newspaper, desc, source}
+function normalize(a){
+  return {
+    title:     a.title     || a.text     || a.TitleAR   || '',
+    country:   a.country   || a.CountryAR  || '',
+    newspaper: a.newspaper || a.NewPaperAR || '',
+    desc:      a.desc      || a.description|| a.DescAR    || '',
+    source:    a.source    || a.Source     || '',
+  };
+}
+
+/* دالة التحميل — تقرأ من الـ endpoint العام، وإلا تستخدم العيّنة */
+async function loadNews(){
+  try{
+    const r = await fetch(FEED_URL, { cache:'no-store' });
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const j = await r.json();
+    if(!j.data || !j.data.length) throw new Error('empty');
+    news = j.data.map(normalize);
+    reportDate = j.updatedAt || new Date().toISOString();
+  }catch(e){
+    // احتياطي: العيّنة (عند فتح الملف محلياً أو تعذّر الاتصال بالـ endpoint)
+    news = SAMPLE.Details.map(normalize);
+    reportDate = SAMPLE.PublishDate;
+    console.log('تعذّر الاتصال بالـ endpoint، استخدام العيّنة:', e.message);
+  }
+  if(idx >= news.length) idx = 0;
+}
+
+function fmtDate(iso){
+  const d = new Date(iso);
+  return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();
+}
+
+function renderFeature(){
+  const n = news[idx];
+  const badge = document.getElementById('fCountry');
+  badge.innerHTML = flagImg(n.country) + (n.country || '—');
+  badge.className = 'cat-badge ' + countryClass(n.country);
+  document.getElementById('fSource').textContent = "المصدر: " + (n.newspaper || '');
+  document.getElementById('fCounter').textContent = "خبر " + (idx+1) + " من " + news.length;
+  document.getElementById('fTitle').textContent = n.title || '';
+  document.getElementById('fExcerpt').textContent = n.desc || '';
+  document.getElementById('fReportDate').textContent = fmtDate(reportDate);
+  renderQR(unwrapSafe(n.source));
+
+  // ظهور ناعم متدرّج لعناصر الخبر عند كل تدوير
+  [document.querySelector('.meta'), document.getElementById('fTitle'), document.getElementById('fExcerpt')]
+    .forEach((el,i)=>{
+      el.classList.remove('reveal'); void el.offsetWidth;
+      el.style.setProperty('--d', (i*0.09)+'s');
+      el.classList.add('reveal');
+    });
+
+  const bar = document.getElementById('fBar');
+  bar.style.transition = 'none';
+  bar.style.width = '0';
+  requestAnimationFrame(()=>{
+    bar.style.transition = 'width ' + ROTATE_MS + 'ms linear';
+    bar.style.width = '100%';
+  });
+
+  document.querySelectorAll('.side-item').forEach((el,i)=>{
+    el.classList.toggle('on', i === idx);
+  });
+  // سكرول تلقائي ناعم يتبع الخبر المعروض
+  const act = document.querySelector('.side-item.on');
+  if(act) act.scrollIntoView({behavior:'smooth', block:'nearest'});
+  // المعيّن يتوسّط مركز الخبر المعروض تماماً
+  const dot = document.getElementById('railDot');
+  const rail = document.querySelector('.rail');
+  if(dot && rail && act){
+    const place = ()=>{
+      const rr = rail.getBoundingClientRect();
+      const ar = act.getBoundingClientRect();
+      dot.style.top = (ar.top + ar.height/2 - rr.top) + 'px';
+    };
+    place();
+    setTimeout(place, 450);   // إعادة الضبط بعد استقرار السكرول
+  }
+}
+
+function renderSide(){
+  const box = document.getElementById('sideItems');
+  box.innerHTML = '';
+  news.forEach((n,i)=>{
+    const d = document.createElement('div');
+    d.className = 'side-item' + (i===idx?' on':'');
+    d.style.animationDelay = (i*0.06)+'s';   // دخول متدرّج
+    d.innerHTML = '<div class="si-body">'
+                +   '<div class="si-src">'+flagImg(n.country)+(n.newspaper||'')+' · '+(n.country||'')+'</div>'
+                +   '<div class="si-title">'+(n.title||'')+'</div>'
+                + '</div>';
+    box.appendChild(d);
+  });
+}
+
+function nextFeature(){
+  idx = (idx + 1) % news.length;
+  renderFeature();
+}
+
+async function init(){
+  await loadNews();
+  renderSide();
+  renderFeature();
+  setInterval(nextFeature, ROTATE_MS);
+
+  // إعادة سحب أحدث تقرير من SharePoint كل 15 دقيقة
+  setInterval(async ()=>{
+    await loadNews();
+    renderSide();
+  }, 15 * 60 * 1000);
+}
+init();
+</script>
+</body>
+</html>
