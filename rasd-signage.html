@@ -88,29 +88,29 @@ body{
 }
 .feature .meta{display:flex;align-items:center;gap:1vw;margin-bottom:2.2vh;flex-wrap:wrap;}
 .cat-badge{
-  font-size:1.7vh;font-weight:700;padding:0.7vh 1.4vw;border-radius:3vh;color:#fff;
+  font-size:2.1vh;font-weight:700;padding:0.8vh 1.5vw;border-radius:3vh;color:#fff;
 }
 .c-qa{background:var(--crimson-dark);}
 .c-eg{background:var(--navy);}
 .c-ae{background:var(--teal);}
 .c-sa{background:var(--gold-dark);}
 .c-other{background:#555;}
-.source-name{font-size:1.9vh;font-weight:700;color:var(--gold-dark);}
-.counter{font-size:1.7vh;color:#888;margin-right:auto;}
+.source-name{font-size:2.3vh;font-weight:700;color:var(--gold-dark);}
+.counter{font-size:2.1vh;color:#888;margin-right:auto;}
 .feature h2{
   font-size:4.6vh;font-weight:900;line-height:1.3;color:#111;
   margin-bottom:2.4vh;
 }
 .feature .excerpt{
-  font-size:2.3vh;line-height:1.75;color:#444;font-weight:400;
-  flex:1;
+  font-size:3vh;line-height:1.7;color:#444;font-weight:400;
+  flex:1;min-height:0;overflow:hidden;
 }
 .feature .foot{
   display:flex;align-items:center;justify-content:space-between;
   flex-wrap:wrap;gap:2vh 2vw;
   margin-top:2vh;padding-top:2vh;border-top:2px solid #eee;
 }
-.feature .foot .lang-tag{font-size:1.6vh;font-weight:700;color:#999;letter-spacing:0.15vw;white-space:nowrap;}
+.feature .foot .lang-tag{font-size:2vh;font-weight:700;color:#999;letter-spacing:0.15vw;white-space:nowrap;}
 .progress{height:0.6vh;background:#eee;border-radius:1vh;overflow:hidden;width:14vw;}
 .progress span{display:block;height:100%;background:var(--crimson);width:0;}
 /* QR */
@@ -118,14 +118,14 @@ body{
 .qr-box{background:#fff;padding:0.8vh;border-radius:1vh;width:13.5vh;height:13.5vh;
   border:1px solid #eee;flex-shrink:0;}
 .qr-box img,.qr-box canvas{width:100%!important;height:100%!important;display:block;}
-.qr-cap{font-size:2.1vh;font-weight:700;color:var(--gold-dark);line-height:1.4;max-width:14vw;}
+.qr-cap{font-size:2.3vh;font-weight:700;color:var(--gold-dark);line-height:1.4;max-width:14vw;}
 .foot-right{display:flex;flex-direction:column;align-items:flex-end;gap:1.2vh;flex-shrink:0;}
 
 /* قائمة الأخبار الجانبية */
 .sidelist{display:flex;flex-direction:column;min-height:0;}
 .side-head{
   display:flex;align-items:center;gap:0.8vw;
-  font-size:2.2vh;font-weight:900;color:var(--gold-light);
+  font-size:2.5vh;font-weight:900;color:var(--gold-light);
   margin-bottom:1.4vh;padding-bottom:1.2vh;
   border-bottom:2px solid rgba(162,148,117,0.4);
 }
@@ -161,8 +161,8 @@ body{
 /* العلامة بجانب كل عنوان (بدل الأقواس) */
 .side-item .si-mark{color:var(--gold-light);font-size:1.5vh;line-height:1.7;flex-shrink:0;}
 .side-item .si-body{flex:1;min-width:0;}
-.side-item .si-src{font-size:1.65vh;font-weight:700;color:var(--gold-light);margin-bottom:0.6vh;}
-.side-item .si-title{font-size:2.15vh;font-weight:700;line-height:1.45;color:#fff;}
+.side-item .si-src{font-size:2vh;font-weight:700;color:var(--gold-light);margin-bottom:0.6vh;}
+.side-item .si-title{font-size:2.5vh;font-weight:700;line-height:1.45;color:#fff;}
 /* الخبر المعروض الآن — بطاقة ذهبية + سهم يشير للمقال */
 .side-item.on{
   position:relative;
@@ -209,13 +209,13 @@ body{
     <!-- القائمة الجانبية (يمين) -->
     <aside class="sidelist">
       <div class="side-head">
-        <svg class="globe" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round">
+        <svg class="globe" viewBox="0 0 24 24" fill="none" stroke="#c4b89a" stroke-width="1.5" stroke-linecap="round">
           <circle cx="12" cy="12" r="9.2"/>
           <ellipse cx="12" cy="12" rx="4" ry="9.2"/>
           <line x1="2.8" y1="12" x2="21.2" y2="12"/>
           <path d="M5 6.6 H19 M5 17.4 H19"/>
         </svg>
-        عناوين اليوم
+        أحدث العناوين
       </div>
       <div class="side-body">
         <div class="rail"><span class="rail-dot" id="railDot"></span></div>
@@ -375,6 +375,21 @@ function fmtDate(iso){
   return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();
 }
 
+// خط المقال المتكيّف: أكبر حجم يناسب المساحة المتاحة (خبر قصير = خط أكبر)
+function fitExcerpt(){
+  const el = document.getElementById('fExcerpt');
+  let lo = 2.6, hi = 4.4;
+  el.style.fontSize = lo + 'vh';
+  if (el.scrollHeight > el.clientHeight + 1) return;   // حتى الأصغر لا يتسع: نبقيه
+  for (let i = 0; i < 8; i++) {
+    const mid = (lo + hi) / 2;
+    el.style.fontSize = mid + 'vh';
+    if (el.scrollHeight > el.clientHeight + 1) hi = mid; else lo = mid;
+  }
+  el.style.fontSize = lo + 'vh';
+}
+window.addEventListener('resize', fitExcerpt);
+
 function renderFeature(){
   const n = news[idx];
   const badge = document.getElementById('fCountry');
@@ -384,6 +399,7 @@ function renderFeature(){
   document.getElementById('fCounter').textContent = "خبر " + (idx+1) + " من " + news.length;
   document.getElementById('fTitle').textContent = n.title || '';
   document.getElementById('fExcerpt').textContent = n.desc || '';
+  fitExcerpt();
   document.getElementById('fReportDate').textContent = fmtDate(reportDate);
   renderQR(unwrapSafe(n.source));
 
