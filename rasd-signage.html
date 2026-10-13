@@ -10,6 +10,7 @@
 @font-face { font-family:'Lusail'; src:url('Lusail__Black.otf') format('opentype'); font-weight:900; }
 
 :root{
+  --u:1vh;   /* وحدة القياس: أفقي = ارتفاع الشاشة · طولي = عرضها */
   --crimson:#BA1538;
   --crimson-dark:#7a0e24;
   --gold:#A29475;
@@ -46,24 +47,24 @@ body{
 }
 .brand-title{
   display:flex;flex-direction:column;justify-content:center;
-  padding:4vh 0;   /* ارتفاع ومساحات سلبية */
+  padding:calc(4 * var(--u)) 0;   /* ارتفاع ومساحات سلبية */
 }
-.brand-title h1{font-size:4.8vh;font-weight:900;line-height:1.1;letter-spacing:0.05vw;}
-.brand-sub{font-size:2vh;color:var(--gold-light);font-weight:400;margin-top:0.8vh;}
+.brand-title h1{font-size:calc(4.8 * var(--u));font-weight:900;line-height:1.1;letter-spacing:0.05vw;}
+.brand-sub{font-size:calc(2 * var(--u));color:var(--gold-light);font-weight:400;margin-top:calc(0.8 * var(--u));}
 /* شارة «مباشر» */
 .live-badge{
   display:flex;align-items:center;gap:0.7vw;
   background:rgba(162,148,117,0.18);border:1.5px solid var(--gold);
-  border-radius:6vh;padding:1.2vh 2vw;
+  border-radius:calc(6 * var(--u));padding:calc(1.2 * var(--u)) 2vw;
 }
 .live-badge .live-dot{
-  width:1.4vh;height:1.4vh;border-radius:50%;background:#25d366;
+  width:calc(1.4 * var(--u));height:calc(1.4 * var(--u));border-radius:50%;background:#25d366;
   box-shadow:0 0 0 0 rgba(37,211,102,.7);animation:pulse 1.8s infinite;
 }
-.live-badge .live-txt{font-size:2.1vh;font-weight:900;color:var(--gold-light);}
+.live-badge .live-txt{font-size:calc(2.1 * var(--u));font-weight:900;color:var(--gold-light);}
 @keyframes pulse{
   0%{box-shadow:0 0 0 0 rgba(37,211,102,.6);}
-  70%{box-shadow:0 0 0 1.5vh rgba(37,211,102,0);}
+  70%{box-shadow:0 0 0 calc(1.5 * var(--u)) rgba(37,211,102,0);}
   100%{box-shadow:0 0 0 0 rgba(37,211,102,0);}
 }
 
@@ -73,77 +74,77 @@ body{
   display:grid;
   grid-template-columns:1.32fr 1.9fr;   /* العناوين يمين (أوسع قليلاً) · الخبر الكبير يسار */
   gap:1.6vw;
-  padding:2.2vh 2.4vw;
+  padding:calc(2.2 * var(--u)) 2.4vw;
   min-height:0;
 }
 
 /* الخبر الرئيسي (يتدور تلقائياً) */
 .feature{
   background:#fff;color:#1a1a1a;
-  border-radius:1.4vh;
-  padding:3.4vh 3vw;
+  border-radius:calc(1.4 * var(--u));
+  padding:calc(3.4 * var(--u)) 3vw;
   display:flex;flex-direction:column;
   position:relative;overflow:hidden;
-  box-shadow:0 2vh 5vh rgba(0,0,0,0.35);
+  box-shadow:0 calc(2 * var(--u)) calc(5 * var(--u)) rgba(0,0,0,0.35);
 }
-.feature .meta{display:flex;align-items:center;gap:1vw;margin-bottom:2.2vh;flex-wrap:wrap;}
+.feature .meta{display:flex;align-items:center;gap:1vw;margin-bottom:calc(2.2 * var(--u));flex-wrap:wrap;}
 .cat-badge{
-  font-size:2.1vh;font-weight:700;padding:0.8vh 1.5vw;border-radius:3vh;color:#fff;
+  font-size:calc(2.1 * var(--u));font-weight:700;padding:calc(0.8 * var(--u)) 1.5vw;border-radius:calc(3 * var(--u));color:#fff;
 }
 .c-qa{background:var(--crimson-dark);}
 .c-eg{background:var(--navy);}
 .c-ae{background:var(--teal);}
 .c-sa{background:var(--gold-dark);}
 .c-other{background:#555;}
-.source-name{font-size:2.3vh;font-weight:700;color:var(--gold-dark);}
-.counter{font-size:2.1vh;color:#888;margin-right:auto;}
+.source-name{font-size:calc(2.3 * var(--u));font-weight:700;color:var(--gold-dark);}
+.counter{font-size:calc(2.1 * var(--u));color:#888;margin-right:auto;}
 .feature h2{
-  font-size:4.6vh;font-weight:900;line-height:1.3;color:#111;
-  margin-bottom:2.4vh;
+  font-size:calc(4.6 * var(--u));font-weight:900;line-height:1.3;color:#111;
+  margin-bottom:calc(2.4 * var(--u));
 }
 .feature .excerpt{
-  font-size:3vh;line-height:1.7;color:#444;font-weight:400;
+  font-size:calc(3 * var(--u));line-height:1.7;color:#444;font-weight:400;
   flex:1;min-height:0;overflow:hidden;
 }
 .feature .foot{
   display:flex;align-items:center;justify-content:space-between;
-  flex-wrap:wrap;gap:2vh 2vw;
-  margin-top:2vh;padding-top:2vh;border-top:2px solid #eee;
+  flex-wrap:wrap;gap:calc(2 * var(--u)) 2vw;
+  margin-top:calc(2 * var(--u));padding-top:calc(2 * var(--u));border-top:2px solid #eee;
 }
-.feature .foot .lang-tag{font-size:2vh;font-weight:700;color:#999;letter-spacing:0.15vw;white-space:nowrap;}
-.progress{height:0.6vh;background:#eee;border-radius:1vh;overflow:hidden;width:14vw;}
+.feature .foot .lang-tag{font-size:calc(2 * var(--u));font-weight:700;color:#999;letter-spacing:0.15vw;white-space:nowrap;}
+.progress{height:calc(0.6 * var(--u));background:#eee;border-radius:calc(1 * var(--u));overflow:hidden;width:14vw;}
 .progress span{display:block;height:100%;background:var(--crimson);width:0;}
 /* QR */
 .qr-wrap{display:flex;align-items:center;gap:1vw;}
-.qr-box{background:#fff;padding:0.8vh;border-radius:1vh;width:13.5vh;height:13.5vh;
+.qr-box{background:#fff;padding:calc(0.8 * var(--u));border-radius:calc(1 * var(--u));width:calc(13.5 * var(--u));height:calc(13.5 * var(--u));
   border:1px solid #eee;flex-shrink:0;}
 .qr-box img,.qr-box canvas{width:100%!important;height:100%!important;display:block;}
-.qr-cap{font-size:2.3vh;font-weight:700;color:var(--gold-dark);line-height:1.4;max-width:14vw;}
-.foot-right{display:flex;flex-direction:column;align-items:flex-end;gap:1.2vh;flex-shrink:0;}
+.qr-cap{font-size:calc(2.3 * var(--u));font-weight:700;color:var(--gold-dark);line-height:1.4;max-width:14vw;}
+.foot-right{display:flex;flex-direction:column;align-items:flex-end;gap:calc(1.2 * var(--u));flex-shrink:0;}
 
 /* قائمة الأخبار الجانبية */
 .sidelist{display:flex;flex-direction:column;min-height:0;}
 .side-head{
   display:flex;align-items:center;gap:0.8vw;
-  font-size:2.5vh;font-weight:900;color:var(--gold-light);
-  margin-bottom:1.4vh;padding-bottom:1.2vh;
+  font-size:calc(2.5 * var(--u));font-weight:900;color:var(--gold-light);
+  margin-bottom:calc(1.4 * var(--u));padding-bottom:calc(1.2 * var(--u));
   border-bottom:2px solid rgba(162,148,117,0.4);
 }
-.side-head .globe{width:2.9vh;height:2.9vh;flex-shrink:0;display:block;}
+.side-head .globe{width:calc(2.9 * var(--u));height:calc(2.9 * var(--u));flex-shrink:0;display:block;}
 .side-items{
-  display:flex;flex-direction:column;gap:1.1vh;flex:1;
+  display:flex;flex-direction:column;gap:calc(1.1 * var(--u));flex:1;
   overflow-y:auto;overflow-x:hidden;scroll-behavior:smooth;
-  padding:0.6vh 2vh 0.6vh 1.8vh;   /* مساحة يمين لطرف البطاقة المكبّرة + يسار للسهم */
+  padding:calc(0.6 * var(--u)) calc(2 * var(--u)) calc(0.6 * var(--u)) calc(1.8 * var(--u));   /* مساحة يمين لطرف البطاقة المكبّرة + يسار للسهم */
 }
 .side-items{scrollbar-width:none;}
 .side-items::-webkit-scrollbar{display:none;}
 /* الحاوية: الشريط المؤشر + العناوين */
 .side-body{display:flex;gap:1vw;flex:1;min-height:0;}
-.rail{position:relative;width:0.5vh;background:rgba(255,255,255,0.12);
-  border-radius:1vh;flex-shrink:0;margin:1.2vh 0;}
+.rail{position:relative;width:calc(0.5 * var(--u));background:rgba(255,255,255,0.12);
+  border-radius:calc(1 * var(--u));flex-shrink:0;margin:calc(1.2 * var(--u)) 0;}
 .rail-dot{position:absolute;left:50%;top:0;transform:translate(-50%,-50%) rotate(45deg);
-  width:1.7vh;height:1.7vh;background:var(--gold);border-radius:2px;
-  box-shadow:0 0.3vh 0.9vh rgba(0,0,0,0.35);
+  width:calc(1.7 * var(--u));height:calc(1.7 * var(--u));background:var(--gold);border-radius:2px;
+  box-shadow:0 calc(0.3 * var(--u)) calc(0.9 * var(--u)) rgba(0,0,0,0.35);
   transition:top .6s cubic-bezier(.22,.61,.36,1);}
 .side-item{
   display:flex;align-items:flex-start;gap:0.8vw;
@@ -152,45 +153,57 @@ body{
   backdrop-filter:blur(9px) saturate(140%);
   -webkit-backdrop-filter:blur(9px) saturate(140%);
   border:1px solid rgba(255,255,255,0.14);
-  border-radius:1.5vh;
-  padding:1.5vh 1.3vw;
+  border-radius:calc(1.5 * var(--u));
+  padding:calc(1.5 * var(--u)) 1.3vw;
   box-shadow:inset 0 1px 0 rgba(255,255,255,0.10), 0 6px 18px rgba(0,0,0,0.18);
   transition:transform .4s cubic-bezier(.22,.61,.36,1), background .4s ease, box-shadow .4s ease, border-color .4s ease;
   animation:itemIn .5s cubic-bezier(.22,.61,.36,1) both;
 }
 /* العلامة بجانب كل عنوان (بدل الأقواس) */
-.side-item .si-mark{color:var(--gold-light);font-size:1.5vh;line-height:1.7;flex-shrink:0;}
+.side-item .si-mark{color:var(--gold-light);font-size:calc(1.5 * var(--u));line-height:1.7;flex-shrink:0;}
 .side-item .si-body{flex:1;min-width:0;}
-.side-item .si-src{font-size:2vh;font-weight:700;color:var(--gold-light);margin-bottom:0.6vh;}
+.side-item .si-src{font-size:calc(2 * var(--u));font-weight:700;color:var(--gold-light);margin-bottom:calc(0.6 * var(--u));}
 .side-item .si-src{display:flex;align-items:center;gap:0.5vw;direction:rtl;}
 .side-item .si-src .flag{margin-left:0;}
 .side-item .si-src .si-np{unicode-bidi:isolate;}
-.side-item .si-title{font-size:2.5vh;font-weight:700;line-height:1.45;color:#fff;}
+.side-item .si-title{font-size:calc(2.5 * var(--u));font-weight:700;line-height:1.45;color:#fff;}
 /* الخبر المعروض الآن — بطاقة ذهبية + سهم يشير للمقال */
 .side-item.on{
   position:relative;
   background:linear-gradient(90deg,var(--gold-light) 0%,var(--gold) 100%);
   transform:scale(1.04);
-  box-shadow:0 1.2vh 3vh rgba(0,0,0,0.35), 0 0 2.6vh rgba(196,184,154,0.4);
+  box-shadow:0 calc(1.2 * var(--u)) calc(3 * var(--u)) rgba(0,0,0,0.35), 0 0 calc(2.6 * var(--u)) rgba(196,184,154,0.4);
 }
 /* سهم بنهاية المستطيل يشير للمقال (يسار) — بلون طرف البطاقة نفسه */
 .side-item.on::after{
-  content:'';position:absolute;top:50%;left:-1vh;transform:translateY(-50%);
-  border-top:1vh solid transparent;border-bottom:1vh solid transparent;
-  border-right:1.1vh solid var(--gold-light);
+  content:'';position:absolute;top:50%;left:calc(-1 * var(--u));transform:translateY(-50%);
+  border-top:calc(1 * var(--u)) solid transparent;border-bottom:calc(1 * var(--u)) solid transparent;
+  border-right:calc(1.1 * var(--u)) solid var(--gold-light);
 }
 .side-item.on .si-mark{color:var(--crimson-dark);}
 .side-item.on .si-src{color:var(--crimson-dark);}
 .side-item.on .si-title{color:#2a1206;}
 /* أعلام الدول — مستطيل كامل بعرض ثابت (بدون قص · يستوعب نِسَب مختلفة مثل قطر) */
-.flag{width:3vh;height:auto;border-radius:3px;vertical-align:middle;
+.flag{width:calc(3 * var(--u));height:auto;border-radius:3px;vertical-align:middle;
   margin-left:0.5vw;box-shadow:0 0 0 1px rgba(255,255,255,0.3);}
-.cat-badge .flag{width:3.6vh;margin-left:0.6vw;box-shadow:0 0 0 1px rgba(255,255,255,0.55);}
+.cat-badge .flag{width:calc(3.6 * var(--u));margin-left:0.6vw;box-shadow:0 0 0 1px rgba(255,255,255,0.55);}
 
 /* أنيميشن */
-@keyframes itemIn{from{opacity:0;translate:0 1.3vh;}to{opacity:1;translate:0 0;}}
-@keyframes fadeSlideUp{from{opacity:0;transform:translateY(1.8vh);}to{opacity:1;transform:translateY(0);}}
+@keyframes itemIn{from{opacity:0;translate:0 calc(1.3 * var(--u));}to{opacity:1;translate:0 0;}}
+@keyframes fadeSlideUp{from{opacity:0;transform:translateY(calc(1.8 * var(--u)));}to{opacity:1;transform:translateY(0);}}
 .reveal{animation:fadeSlideUp .6s cubic-bezier(.22,.61,.36,1) both;animation-delay:var(--d,0s);}
+
+/* ============ شاشة طولية (1080×1920) ============ */
+@media (orientation:portrait){
+  :root{--u:1vw;}
+  .main{grid-template-columns:1fr;grid-template-rows:minmax(0,1.12fr) minmax(0,1fr);gap:calc(1.6 * var(--u));padding:calc(2 * var(--u)) calc(2.4 * var(--u));}
+  .feature{order:1;}
+  .sidelist{order:2;}
+  .brand-title h1{font-size:calc(5.4 * var(--u));}
+  .brand-sub{font-size:calc(2.5 * var(--u));}
+  .feature h2{font-size:calc(5.2 * var(--u));}
+  .qr-box{width:calc(15 * var(--u));height:calc(15 * var(--u));}
+}
 </style>
 </head>
 <body>
@@ -382,14 +395,14 @@ function fmtDate(iso){
 function fitExcerpt(){
   const el = document.getElementById('fExcerpt');
   let lo = 2.6, hi = 4.4;
-  el.style.fontSize = lo + 'vh';
+  el.style.fontSize = 'calc(' + lo + ' * var(--u))';
   if (el.scrollHeight > el.clientHeight + 1) return;   // حتى الأصغر لا يتسع: نبقيه
   for (let i = 0; i < 8; i++) {
     const mid = (lo + hi) / 2;
-    el.style.fontSize = mid + 'vh';
+    el.style.fontSize = 'calc(' + mid + ' * var(--u))';
     if (el.scrollHeight > el.clientHeight + 1) hi = mid; else lo = mid;
   }
-  el.style.fontSize = lo + 'vh';
+  el.style.fontSize = 'calc(' + lo + ' * var(--u))';
 }
 window.addEventListener('resize', fitExcerpt);
 
