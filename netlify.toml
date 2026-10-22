@@ -1,0 +1,4 @@
+# الأخبار (tax.json) تُقرأ مباشرة من GitHub، فلا حاجة لإعادة نشر الموقع عند تغيّرها.
+# يُلغى النشر إذا كان التغيير في tax.json فقط (exit 0 = تخطَّ البناء).
+[build]
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- . ':(exclude)tax.json'"
