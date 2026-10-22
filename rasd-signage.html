@@ -275,7 +275,12 @@ body{
 
    غيّر FEED_URL لرابط الـ endpoint بعد نشره (مثال: /api/signage/tax أو رابط كامل).
    ========================================================================== */
-const FEED_URL = "tax.json";  // ← ملف عام بنفس مجلد الصفحة (ينشره/يحدّثه Power Automate)
+// المصدر الأساسي: الملف الذي يحدّثه Power Automate مباشرة على GitHub (لا ينتظر إعادة نشر الموقع)
+// الاحتياطي: tax.json بجوار الصفحة
+const FEED_URLS = [
+  "https://raw.githubusercontent.com/rustomabd/tax-news-signage/main/tax.json",
+  "tax.json"
+];
 
 // عيّنة حقيقية من تقرير 15/09/2026 (احتياطية عند فتح الملف محلياً بدون جلسة)
 const SAMPLE = {
@@ -294,6 +299,7 @@ const SAMPLE = {
 let news = [];
 let reportDate = "";
 let idx = 0;
+const MIN_NEWS = 4;   // الحد الأدنى للأخبار المعروضة (نكمّل من التقارير القديمة)
 const ROTATE_MS = 12000; // مدة عرض كل خبر رئيسي
 
 // لون شارة الدولة
@@ -368,15 +374,57 @@ function normalize(a){
   };
 }
 
+const GH_REPO = "rustomabd/tax-news-signage";
+async function fillFromGithubHistory(){
+  const seen = new Set(news.map(n => n.title));
+  const cr = await fetch('https://api.github.com/repos/'+GH_REPO+'/commits?path=tax.json&per_page=15');
+  if(!cr.ok) throw new Error('commits HTTP '+cr.status);
+  const commits = await cr.json();
+  for (const c of commits.slice(1)) {            // الأول = النسخة الحالية
+    if (news.length >= MIN_NEWS) break;
+    const r = await fetch('https://raw.githubusercontent.com/'+GH_REPO+'/'+c.sha+'/tax.json');
+    if(!r.ok) continue;
+    const x = await r.json();
+    const d = x.updatedAt || c.commit.committer.date;
+    for (const a of (x.data || [])) {
+      if (news.length >= MIN_NEWS) break;
+      const n = normalize(a);
+      if (!n.title || seen.has(n.title)) continue;
+      seen.add(n.title);
+      news.push({...n, date: d});
+    }
+  }
+}
+
 /* دالة التحميل — تقرأ من الـ endpoint العام، وإلا تستخدم العيّنة */
 async function loadNews(){
   try{
-    const r = await fetch(FEED_URL, { cache:'no-store' });
-    if(!r.ok) throw new Error('HTTP '+r.status);
-    const j = await r.json();
-    if(!j.data || !j.data.length) throw new Error('empty');
-    news = j.data.map(normalize);
+    let j = null, lastErr;
+    for (const u of FEED_URLS) {
+      try {
+        const r = await fetch(u + '?t=' + Math.floor(Date.now()/300000), { cache:'no-store' });
+        if(!r.ok) throw new Error('HTTP '+r.status);
+        const x = await r.json();
+        if(!x.data || !x.data.length) throw new Error('empty');
+        j = x; break;
+      } catch(e) { lastErr = e; }
+    }
+    if(!j) throw lastErr;
     reportDate = j.updatedAt || new Date().toISOString();
+    news = j.data.map(normalize).map(n => ({...n, date: reportDate}));
+    // قليل الأخبار اليوم؟ نكمّل من التقارير السابقة حتى نصل للحد الأدنى (الأحدث أولاً)
+    for (const h of (j.history || [])) {
+      if (news.length >= MIN_NEWS) break;
+      const hd = h.date || h.PublishDate || '';
+      for (const a of (h.data || [])) {
+        if (news.length >= MIN_NEWS) break;
+        news.push({...normalize(a), date: hd});
+      }
+    }
+    // إن كانت الأخبار أقل من الحد الأدنى: نكمّل من النسخ القديمة لنفس الملف على GitHub (الأحدث أولاً)
+    if (news.length < MIN_NEWS) {
+      try { await fillFromGithubHistory(); } catch(e) { console.log('تعذّر جلب الأرشيف:', e.message); }
+    }
   }catch(e){
     // احتياطي: العيّنة (عند فتح الملف محلياً أو تعذّر الاتصال بالـ endpoint)
     news = SAMPLE.Details.map(normalize);
@@ -416,7 +464,7 @@ function renderFeature(){
   document.getElementById('fTitle').textContent = n.title || '';
   document.getElementById('fExcerpt').textContent = n.desc || '';
   fitExcerpt();
-  document.getElementById('fReportDate').textContent = fmtDate(reportDate);
+  document.getElementById('fReportDate').textContent = fmtDate(n.date || reportDate);
   renderQR(unwrapSafe(n.source));
 
   // ظهور ناعم متدرّج لعناصر الخبر عند كل تدوير
