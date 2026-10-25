@@ -40,7 +40,7 @@ body{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  border-bottom:5px solid var(--gold);
+  border-bottom:5px solid #fff;
   background:#032a3d;   /* أغمق قليلاً من الخلفية · بدون تدرّج ذهبي */
   flex-shrink:0;
   padding:0 3vw;
@@ -198,17 +198,34 @@ body{
 
 /* ============ شاشة طولية (1080×1920) ============ */
 @media (orientation:portrait){
-  :root{--u:1vw;}
-  .main{grid-template-columns:1fr;grid-template-rows:minmax(0,1.12fr) minmax(0,1fr);gap:calc(1.6 * var(--u));padding:calc(2 * var(--u)) calc(2.4 * var(--u));}
-  .feature{order:1;}
-  .sidelist{order:2;}
-  .gta-logo{display:block;height:calc(9.5 * var(--u));width:auto;
-    padding-left:calc(2.4 * var(--u));border-left:2px solid rgba(162,148,117,0.5);}
-  .brand-title{padding:calc(3 * var(--u)) 0;}
-  .brand-title h1{font-size:calc(4.4 * var(--u));}
-  .brand-sub{font-size:calc(2.2 * var(--u));}
-  .feature h2{font-size:calc(5.2 * var(--u));}
+  :root{--u:1vw;--g:3.2;}   /* --g = الهامش الأساسي؛ كل المسافات مضاعفاته */
+  /* الهيدر: شعار ← عنوان رئيسي ← عنوان فرعي، متمركزة وبإيقاع مسافات واحد */
+  .topbar{position:relative;justify-content:center;
+    padding:calc(4.2 * var(--u)) calc(var(--g) * var(--u)) calc(3.8 * var(--u));}
+  .brand-wrap{flex-direction:column;justify-content:center;align-items:center;gap:calc(3 * var(--u));}
+  .gta-logo{display:block;height:calc(9 * var(--u));width:auto;}
+  .brand-title{padding:0;align-items:center;text-align:center;}
+  .brand-title h1{font-size:calc(5.8 * var(--u));line-height:1.2;letter-spacing:0;}
+  .brand-sub{font-size:calc(2.5 * var(--u));margin-top:calc(1.3 * var(--u));opacity:.95;}
+  .live-badge{position:absolute;top:calc(3 * var(--u));left:calc(var(--g) * var(--u));
+    padding:calc(0.9 * var(--u)) calc(1.8 * var(--u));}
+  .live-badge .live-txt{font-size:calc(1.9 * var(--u));}
+  /* المحتوى: هوامش جانبية = الهامش الأساسي، والمسافة بين الكتل = الهامش نفسه */
+  .main{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto;
+    gap:calc(2.6 * var(--u));padding:calc(2.8 * var(--u)) calc(var(--g) * var(--u)) calc(3 * var(--u));}
+  .feature{order:1;padding:calc(3.2 * var(--u)) calc(3.2 * var(--u));}
+  .sidelist{order:2;max-height:calc(64 * var(--u));}
+  .feature h2{font-size:calc(4.2 * var(--u));margin-bottom:calc(1.8 * var(--u));}
   .qr-box{width:calc(15 * var(--u));height:calc(15 * var(--u));}
+  /* قسم «أحدث العناوين» */
+  .side-head{font-size:calc(3 * var(--u));gap:calc(1.3 * var(--u));
+    margin-bottom:calc(1.4 * var(--u));padding-bottom:calc(1.3 * var(--u));}
+  .side-head .globe{width:calc(3.2 * var(--u));height:calc(3.2 * var(--u));}
+  .side-items{gap:calc(1.2 * var(--u));}
+  .side-item{padding:calc(1.4 * var(--u)) calc(1.8 * var(--u));}
+  .side-item .si-src{font-size:calc(2 * var(--u));margin-bottom:calc(0.4 * var(--u));}
+  .side-item .si-title{font-size:calc(2.45 * var(--u));line-height:1.4;}
+}
 }
 </style>
 </head>
@@ -451,17 +468,32 @@ function fmtDate(iso){
 // خط المقال المتكيّف: أكبر حجم يناسب المساحة المتاحة (خبر قصير = خط أكبر)
 function fitExcerpt(){
   const el = document.getElementById('fExcerpt');
-  let lo = 2.6, hi = 4.4;
-  el.style.fontSize = 'calc(' + lo + ' * var(--u))';
-  if (el.scrollHeight > el.clientHeight + 1) return;   // حتى الأصغر لا يتسع: نبقيه
-  for (let i = 0; i < 8; i++) {
-    const mid = (lo + hi) / 2;
-    el.style.fontSize = 'calc(' + mid + ' * var(--u))';
-    if (el.scrollHeight > el.clientHeight + 1) hi = mid; else lo = mid;
+  const portrait = matchMedia('(orientation:portrait)').matches;
+  let lo = portrait ? 2.4 : 2.6, hi = 4.4;
+  const px = v => 'calc(' + v + ' * var(--u))';
+  // إعادة الضبط (إلغاء أي اقتطاع سابق)
+  el.style.display = ''; el.style.webkitLineClamp = ''; el.style.webkitBoxOrient = ''; el.style.maxHeight = '';
+  el.style.fontSize = px(lo);
+  if (el.scrollHeight <= el.clientHeight + 1) {
+    for (let i = 0; i < 8; i++) {
+      const mid = (lo + hi) / 2;
+      el.style.fontSize = px(mid);
+      if (el.scrollHeight > el.clientHeight + 1) hi = mid; else lo = mid;
+    }
+    el.style.fontSize = px(lo);
+    return;
   }
-  el.style.fontSize = 'calc(' + lo + ' * var(--u))';
+  // حتى الأصغر لا يتسع: نقتطع عند آخر سطر كامل مع «…» بدل قصّ نصف سطر
+  const lh = parseFloat(getComputedStyle(el).lineHeight);
+  const lines = Math.max(1, Math.floor(el.clientHeight / lh));
+  el.style.setProperty('display', '-webkit-box');
+  el.style.setProperty('-webkit-box-orient', 'vertical');
+  el.style.setProperty('-webkit-line-clamp', String(lines));
+  el.style.maxHeight = (lines * lh) + 'px';   // ضمان: لا يظهر أي جزء من سطر مقطوع
 }
 window.addEventListener('resize', fitExcerpt);
+// أعد الحساب بعد اكتمال تحميل خط Lusail (قبلها تكون القياسات غير دقيقة)
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitExcerpt);
 
 function renderFeature(){
   const n = news[idx];
