@@ -51,6 +51,9 @@ body{
 }
 .brand-title h1{font-size:calc(4.8 * var(--u));font-weight:900;line-height:1.1;letter-spacing:0.05vw;}
 .brand-sub{font-size:calc(2 * var(--u));color:var(--gold-light);font-weight:400;margin-top:calc(0.8 * var(--u));}
+/* الشعار: يظهر في الشاشة الطولية فقط */
+.brand-wrap{display:flex;align-items:center;gap:calc(2.4 * var(--u));}
+.gta-logo{display:none;}
 /* شارة «مباشر» */
 .live-badge{
   display:flex;align-items:center;gap:0.7vw;
@@ -199,8 +202,11 @@ body{
   .main{grid-template-columns:1fr;grid-template-rows:minmax(0,1.12fr) minmax(0,1fr);gap:calc(1.6 * var(--u));padding:calc(2 * var(--u)) calc(2.4 * var(--u));}
   .feature{order:1;}
   .sidelist{order:2;}
-  .brand-title h1{font-size:calc(5.4 * var(--u));}
-  .brand-sub{font-size:calc(2.5 * var(--u));}
+  .gta-logo{display:block;height:calc(9.5 * var(--u));width:auto;
+    padding-left:calc(2.4 * var(--u));border-left:2px solid rgba(162,148,117,0.5);}
+  .brand-title{padding:calc(3 * var(--u)) 0;}
+  .brand-title h1{font-size:calc(4.4 * var(--u));}
+  .brand-sub{font-size:calc(2.2 * var(--u));}
   .feature h2{font-size:calc(5.2 * var(--u));}
   .qr-box{width:calc(15 * var(--u));height:calc(15 * var(--u));}
 }
@@ -210,9 +216,12 @@ body{
 
   <!-- ===== الهيدر ===== -->
   <header class="topbar">
-    <div class="brand-title">
-      <h1>التقرير الإعلامي اليومي</h1>
-      <div class="brand-sub">رصد إعلامي يومي للأخبار المتعلقة بالضرائب</div>
+    <div class="brand-wrap">
+      <img class="gta-logo" src="gta-logo-white.png" alt="الهيئة العامة للضرائب">
+      <div class="brand-title">
+        <h1>التقرير الإعلامي اليومي</h1>
+        <div class="brand-sub">رصد إعلامي يومي للأخبار المتعلقة بالضرائب</div>
+      </div>
     </div>
     <div class="live-badge">
       <span class="live-dot"></span>
