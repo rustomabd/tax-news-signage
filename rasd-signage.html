@@ -305,12 +305,13 @@ body{
 
    غيّر FEED_URL لرابط الـ endpoint بعد نشره (مثال: /api/signage/tax أو رابط كامل).
    ========================================================================== */
-// المصدر الأساسي: الملف الذي يحدّثه Power Automate مباشرة على GitHub (لا ينتظر إعادة نشر الموقع)
-// الاحتياطي: tax.json بجوار الصفحة
-const FEED_URLS = [
-  "https://raw.githubusercontent.com/rustomabd/tax-news-signage/main/tax.json",
-  "tax.json"
+// feed.json = آخر تقرير + أرشيف التقارير السابقة (يبنيه GitHub تلقائياً عند كل تحديث).
+// نقرأ المصدرين معاً ونأخذ الأحدث: نسخة الموقع نفسه (تعمل دائماً على شبكة الهيئة) ونسخة GitHub المباشرة.
+const FEED_SOURCES = [
+  "feed.json",
+  "https://raw.githubusercontent.com/rustomabd/tax-news-signage/main/feed.json"
 ];
+const FETCH_TIMEOUT_MS = 7000;   // أي مصدر لا يرد خلال هذه المدة نتجاوزه بدل الانتظار للأبد
 
 // عيّنة حقيقية من تقرير 15/09/2026 (احتياطية عند فتح الملف محلياً بدون جلسة)
 const SAMPLE = {
@@ -361,7 +362,7 @@ const ISO_MAP = [
 ];
 function isoFor(c){
   if(!c) return '';
-  for(const [iso,keys] of ISO_MAP){ for(const k of keys){ if(c.indexOf(k) > -1) return iso; } }
+  for(var i=0;i<ISO_MAP.length;i++){ var keys=ISO_MAP[i][1]; for(var q=0;q<keys.length;q++){ if(c.indexOf(keys[q]) > -1) return ISO_MAP[i][0]; } }
   return '';
 }
 function flagImg(country){
@@ -404,69 +405,85 @@ function normalize(a){
   };
 }
 
-const GH_REPO = "rustomabd/tax-news-signage";
-async function fillFromGithubHistory(){
-  const seen = new Set(news.map(n => n.title));
-  const cr = await fetch('https://api.github.com/repos/'+GH_REPO+'/commits?path=tax.json&per_page=15');
-  if(!cr.ok) throw new Error('commits HTTP '+cr.status);
-  const commits = await cr.json();
-  for (const c of commits.slice(1)) {            // الأول = النسخة الحالية
-    if (news.length >= MIN_NEWS) break;
-    const r = await fetch('https://raw.githubusercontent.com/'+GH_REPO+'/'+c.sha+'/tax.json');
-    if(!r.ok) continue;
-    const x = await r.json();
-    const d = x.updatedAt || c.commit.committer.date;
-    for (const a of (x.data || [])) {
-      if (news.length >= MIN_NEWS) break;
-      const n = normalize(a);
-      if (!n.title || seen.has(n.title)) continue;
-      seen.add(n.title);
-      news.push({...n, date: d});
-    }
-  }
+function getJSON(url, timeoutMs){
+  return new Promise(function(resolve, reject){
+    var x = new XMLHttpRequest();
+    x.open('GET', url + (url.indexOf('?') > -1 ? '&' : '?') + 't=' + Math.floor(new Date().getTime()/120000), true);
+    x.timeout = timeoutMs;
+    x.onload = function(){
+      if(x.status >= 200 && x.status < 300){
+        try{ resolve(JSON.parse(x.responseText)); }catch(e){ reject(e); }
+      } else { reject(new Error('HTTP ' + x.status)); }
+    };
+    x.onerror   = function(){ reject(new Error('network')); };
+    x.ontimeout = function(){ reject(new Error('timeout')); };
+    x.send();
+  });
 }
 
-/* دالة التحميل — تقرأ من الـ endpoint العام، وإلا تستخدم العيّنة */
-async function loadNews(){
-  try{
-    let j = null, lastErr;
-    for (const u of FEED_URLS) {
-      try {
-        const r = await fetch(u + '?t=' + Math.floor(Date.now()/300000), { cache:'no-store' });
-        if(!r.ok) throw new Error('HTTP '+r.status);
-        const x = await r.json();
-        if(!x.data || !x.data.length) throw new Error('empty');
-        j = x; break;
-      } catch(e) { lastErr = e; }
-    }
-    if(!j) throw lastErr;
-    reportDate = j.updatedAt || new Date().toISOString();
-    news = j.data.map(normalize).map(n => ({...n, date: reportDate}));
-    // قليل الأخبار اليوم؟ نكمّل من التقارير السابقة حتى نصل للحد الأدنى (الأحدث أولاً)
-    for (const h of (j.history || [])) {
-      if (news.length >= MIN_NEWS) break;
-      const hd = h.date || h.PublishDate || '';
-      for (const a of (h.data || [])) {
-        if (news.length >= MIN_NEWS) break;
-        news.push({...normalize(a), date: hd});
-      }
-    }
-    // إن كانت الأخبار أقل من الحد الأدنى: نكمّل من النسخ القديمة لنفس الملف على GitHub (الأحدث أولاً)
-    if (news.length < MIN_NEWS) {
-      try { await fillFromGithubHistory(); } catch(e) { console.log('تعذّر جلب الأرشيف:', e.message); }
-    }
-  }catch(e){
-    // احتياطي: العيّنة (عند فتح الملف محلياً أو تعذّر الاتصال بالـ endpoint)
-    news = SAMPLE.Details.map(normalize);
-    reportDate = SAMPLE.PublishDate;
-    console.log('تعذّر الاتصال بالـ endpoint، استخدام العيّنة:', e.message);
+function withDate(n, d){
+  return { title:n.title, country:n.country, newspaper:n.newspaper, desc:n.desc, source:n.source, date:d };
+}
+
+// نبني قائمة الأخبار: أخبار آخر تقرير، ثم نكمّل من الأرشيف حتى الحد الأدنى
+function buildNews(j){
+  reportDate = j.updatedAt || new Date().toISOString();
+  var out = [], seen = {}, k, a, n, h, hd;
+  for(k = 0; k < j.data.length; k++){
+    n = normalize(j.data[k]);
+    if(!n.title || seen[n.title]) continue;
+    seen[n.title] = true; out.push(withDate(n, reportDate));
   }
-  if(idx >= news.length) idx = 0;
+  var hist = j.history || [];
+  for(h = 0; h < hist.length && out.length < MIN_NEWS; h++){
+    hd = hist[h].date || hist[h].PublishDate || '';
+    var arr = hist[h].data || [];
+    for(a = 0; a < arr.length && out.length < MIN_NEWS; a++){
+      n = normalize(arr[a]);
+      if(!n.title || seen[n.title]) continue;
+      seen[n.title] = true; out.push(withDate(n, hd));
+    }
+  }
+  return out;
+}
+
+function feedStamp(f){ return (f && f.updatedAt) ? String(f.updatedAt) : ''; }
+
+/* دالة التحميل — تقرأ المصادر معاً (بمهلة)، وتأخذ الأحدث؛ وإلا آخر نسخة محفوظة؛ وإلا العيّنة */
+function loadNews(){
+  var tasks = FEED_SOURCES.map(function(u){
+    return getJSON(u, FETCH_TIMEOUT_MS).then(function(x){
+      return (x && x.data && x.data.length) ? x : null;
+    }).catch(function(e){ console.log('تعذّر المصدر', u, e.message); return null; });
+  });
+  return Promise.all(tasks).then(function(res){
+    var best = null, i;
+    for(i = 0; i < res.length; i++){
+      if(res[i] && (!best || feedStamp(res[i]) > feedStamp(best))) best = res[i];
+    }
+    if(best){
+      try{ localStorage.setItem('rasd_last_feed', JSON.stringify(best)); }catch(e){}
+      return best;
+    }
+    try{                                   // لا اتصال: آخر نسخة ناجحة محفوظة على الشاشة
+      var c = JSON.parse(localStorage.getItem('rasd_last_feed') || 'null');
+      if(c && c.data && c.data.length) return c;
+    }catch(e){}
+    return null;
+  }).then(function(feed){
+    if(feed){ news = buildNews(feed); }
+    else {
+      news = SAMPLE.Details.map(normalize).map(function(n){ return withDate(n, SAMPLE.PublishDate); });
+      reportDate = SAMPLE.PublishDate;
+    }
+    if(idx >= news.length) idx = 0;
+  });
 }
 
 function fmtDate(iso){
   const d = new Date(iso);
-  return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();
+  function p2(v){ return (v < 10 ? '0' : '') + v; }
+  return p2(d.getDate())+'/'+p2(d.getMonth()+1)+'/'+d.getFullYear();
 }
 
 // خط المقال المتكيّف: أكبر حجم يناسب المساحة المتاحة (خبر قصير = خط أكبر)
@@ -568,18 +585,18 @@ function nextFeature(){
   renderFeature();
 }
 
-async function init(){
-  await loadNews();
-  renderSide();
-  renderFeature();
-  setInterval(nextFeature, ROTATE_MS);
-
-  // إعادة سحب أحدث تقرير من SharePoint كل 15 دقيقة
-  setInterval(async ()=>{
-    await loadNews();
+function init(){
+  loadNews().then(function(){
     renderSide();
-  }, 15 * 60 * 1000);
+    renderFeature();
+    window.__ready = true;
+    setInterval(nextFeature, ROTATE_MS);
+    // إعادة سحب أحدث تقرير كل 15 دقيقة
+    setInterval(function(){ loadNews().then(renderSide); }, 15 * 60 * 1000);
+  });
 }
+// حارس: لو بقيت الصفحة على «جارٍ التحميل» لأي سبب، نعيد تحميلها تلقائياً
+setTimeout(function(){ if(!window.__ready) location.reload(); }, 30000);
 init();
 </script>
 </body>
