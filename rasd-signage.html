@@ -78,7 +78,7 @@ body{
   flex:1;
   display:grid;
   grid-template-columns:1.32fr 1.9fr;   /* العناوين يمين (أوسع قليلاً) · الخبر الكبير يسار */
-  gap:1.6vw;
+  gap:1.6vw;grid-gap:1.6vw;
   padding:calc(2.2 * var(--u)) 2.4vw;
   min-height:0;
 }
@@ -193,6 +193,23 @@ body{
   margin-left:0.5vw;box-shadow:0 0 0 1px rgba(255,255,255,0.3);}
 .cat-badge .flag{width:calc(3.6 * var(--u));margin-left:0.6vw;box-shadow:0 0 0 1px rgba(255,255,255,0.55);}
 
+/* احتياط للمتصفحات القديمة التي لا تدعم gap داخل flex: يضيف الكشف الصنف no-gap */
+.no-gap .brand-wrap>*+*{margin-right:calc(2.4 * var(--u));}
+.no-gap .live-badge>*+*{margin-right:calc(1.5 * var(--u));}
+.no-gap .feature .meta>*{margin-left:1vw;}
+.no-gap .qr-wrap>*+*{margin-right:1vw;}
+.no-gap .foot-right>*+*{margin-top:calc(1.2 * var(--u));}
+.no-gap .side-head .globe{margin-left:0.8vw;}
+.no-gap .side-head .live-badge{margin-right:auto;}
+.no-gap .side-body>*+*{margin-right:1vw;}
+.no-gap .side-items>*+*{margin-top:calc(1.1 * var(--u));}
+.no-gap .si-src>*+*{margin-right:0.5vw;}
+@media (orientation:portrait){
+  .no-gap .brand-wrap>*+*{margin-right:0;margin-top:calc(3 * var(--u));}
+  .no-gap .side-head .globe{margin-left:calc(1.3 * var(--u));}
+  .no-gap .side-items>*+*{margin-top:calc(1.2 * var(--u));}
+}
+
 /* أنيميشن */
 @keyframes itemIn{from{opacity:0;translate:0 calc(1.3 * var(--u));}to{opacity:1;translate:0 0;}}
 @keyframes fadeSlideUp{from{opacity:0;transform:translateY(calc(1.8 * var(--u)));}to{opacity:1;transform:translateY(0);}}
@@ -210,14 +227,16 @@ body{
   .brand-title h1{font-size:calc(5.8 * var(--u));line-height:1.2;letter-spacing:0;}
   .brand-sub{font-size:calc(2.5 * var(--u));margin-top:calc(1.3 * var(--u));opacity:.95;}
   .topbar .live-badge{display:none;}
-  .live-badge.side-badge{display:flex;margin-inline-start:auto;padding:calc(0.8 * var(--u)) calc(1.8 * var(--u));}
+  .live-badge.side-badge{display:flex;margin-right:auto;padding:calc(0.8 * var(--u)) calc(1.8 * var(--u));}
   .side-badge .live-txt{font-size:calc(2 * var(--u));font-weight:900;}
   .side-badge .live-dot{width:calc(1.4 * var(--u));height:calc(1.4 * var(--u));}
   /* المحتوى: هوامش جانبية = الهامش الأساسي، والمسافة بين الكتل = الهامش نفسه */
-  .main{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto;
-    gap:calc(2.6 * var(--u));padding:calc(2.8 * var(--u)) calc(var(--g) * var(--u)) calc(3 * var(--u));}
-  .feature{order:1;padding:calc(3.2 * var(--u)) calc(3.2 * var(--u));}
-  .sidelist{order:2;max-height:calc(64 * var(--u));}
+  .main{display:flex;flex-direction:column;gap:0;grid-gap:0;
+    padding:calc(2.8 * var(--u)) calc(var(--g) * var(--u)) calc(3 * var(--u));}
+  .feature{order:1;flex:1 1 0;min-height:0;padding:calc(3.2 * var(--u)) calc(3.2 * var(--u));}
+  .sidelist{order:2;flex:0 0 auto;margin-top:calc(2.6 * var(--u));max-height:calc(64 * var(--u));}
+  .side-body{flex:1 1 auto;}
+  .side-items{flex:1 1 auto;}
   .feature h2{font-size:calc(4.2 * var(--u));margin-bottom:calc(1.8 * var(--u));}
   .qr-box{width:calc(15 * var(--u));height:calc(15 * var(--u));}
   /* قسم «أحدث العناوين» */
@@ -293,6 +312,20 @@ body{
 
 <!-- مكتبة توليد QR — تعمل محلياً في المتصفح، بدون أي نداء خارجي -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+// كشف دعم gap في flex (غير مدعوم في المتصفحات القديمة على بعض الشاشات)
+(function(){
+  try{
+    var d = document.createElement('div');
+    d.style.cssText = 'display:flex;flex-direction:column;row-gap:1px;position:absolute;visibility:hidden';
+    d.appendChild(document.createElement('div')); d.appendChild(document.createElement('div'));
+    document.body.appendChild(d);
+    var ok = d.scrollHeight === 1;
+    document.body.removeChild(d);
+    if(!ok) document.documentElement.className += ' no-gap';
+  }catch(e){ document.documentElement.className += ' no-gap'; }
+})();
+</script>
 <script>
 /* ==========================================================================
    مصدر البيانات — endpoint عام (بدون تسجيل دخول على الشاشة)
