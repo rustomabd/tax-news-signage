@@ -549,53 +549,89 @@ window.addEventListener('resize', fitExcerpt);
 // أعد الحساب بعد اكتمال تحميل خط Lusail (قبلها تكون القياسات غير دقيقة)
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitExcerpt);
 
+// تنفيذ آمن: أي خطأ في مقطع يُسجَّل ولا يوقف بقية الكود (مهم للمتصفحات القديمة)
+function guard(label, fn){
+  try{ fn(); }catch(e){ logErr(label + ': ' + (e && e.message ? e.message : e)); }
+}
+var __errs = [];
+function logErr(m){
+  __errs.push(m);
+  try{ console.log('RASD error:', m); }catch(e){}
+  if(/[?&]debug/.test(location.search)){
+    var b = document.getElementById('dbg');
+    if(!b){
+      b = document.createElement('div'); b.id = 'dbg';
+      b.style.cssText = 'position:fixed;left:0;top:0;z-index:99999;background:#000c;color:#ff8;font:14px monospace;direction:ltr;padding:6px;max-width:60%;white-space:pre-wrap';
+      document.body.appendChild(b);
+    }
+    b.textContent = __errs.slice(-6).join('\n');
+  }
+}
+window.onerror = function(msg, src, line){ logErr(msg + ' @' + line); };
+function each(list, fn){ Array.prototype.forEach.call(list, fn); }
+
 function renderFeature(){
-  const n = news[idx];
-  const badge = document.getElementById('fCountry');
-  badge.innerHTML = flagImg(n.country) + (n.country || '—');
-  badge.className = 'cat-badge ' + countryClass(n.country);
-  document.getElementById('fSource').textContent = "المصدر: " + (n.newspaper || '');
-  document.getElementById('fCounter').textContent = "خبر " + (idx+1) + " من " + news.length;
-  document.getElementById('fTitle').textContent = n.title || '';
-  document.getElementById('fExcerpt').textContent = n.desc || '';
-  fitExcerpt();
-  document.getElementById('fReportDate').textContent = fmtDate(n.date || reportDate);
-  renderQR(unwrapSafe(n.source));
+  var n = news[idx];
+  if(!n) return;
+  guard('نص', function(){
+    var badge = document.getElementById('fCountry');
+    badge.innerHTML = flagImg(n.country) + (n.country || '—');
+    badge.className = 'cat-badge ' + countryClass(n.country);
+    document.getElementById('fSource').textContent = "المصدر: " + (n.newspaper || '');
+    document.getElementById('fCounter').textContent = "خبر " + (idx+1) + " من " + news.length;
+    document.getElementById('fTitle').textContent = n.title || '';
+    document.getElementById('fExcerpt').textContent = n.desc || '';
+    document.getElementById('fReportDate').textContent = fmtDate(n.date || reportDate);
+  });
+  guard('حجم الخط', fitExcerpt);
+  guard('QR', function(){ renderQR(unwrapSafe(n.source)); });
 
   // ظهور ناعم متدرّج لعناصر الخبر عند كل تدوير
-  [document.querySelector('.meta'), document.getElementById('fTitle'), document.getElementById('fExcerpt')]
-    .forEach((el,i)=>{
+  guard('أنيميشن', function(){
+    var els = [document.querySelector('.meta'), document.getElementById('fTitle'), document.getElementById('fExcerpt')];
+    each(els, function(el, i){
       el.classList.remove('reveal'); void el.offsetWidth;
       el.style.setProperty('--d', (i*0.09)+'s');
       el.classList.add('reveal');
     });
-
-  const bar = document.getElementById('fBar');
-  bar.style.transition = 'none';
-  bar.style.width = '0';
-  requestAnimationFrame(()=>{
-    bar.style.transition = 'width ' + ROTATE_MS + 'ms linear';
-    bar.style.width = '100%';
   });
 
-  document.querySelectorAll('.side-item').forEach((el,i)=>{
-    el.classList.toggle('on', i === idx);
-  });
-  // سكرول تلقائي ناعم يتبع الخبر المعروض
-  const act = document.querySelector('.side-item.on');
-  if(act) act.scrollIntoView({behavior:'smooth', block:'nearest'});
-  // المعيّن يتوسّط مركز الخبر المعروض تماماً
-  const dot = document.getElementById('railDot');
-  const rail = document.querySelector('.rail');
-  if(dot && rail && act){
-    const place = ()=>{
-      const rr = rail.getBoundingClientRect();
-      const ar = act.getBoundingClientRect();
-      dot.style.top = (ar.top + ar.height/2 - rr.top) + 'px';
+  guard('شريط التقدم', function(){
+    var bar = document.getElementById('fBar');
+    bar.style.transition = 'none';
+    bar.style.width = '0';
+    var go = function(){
+      bar.style.transition = 'width ' + ROTATE_MS + 'ms linear';
+      bar.style.width = '100%';
     };
-    place();
-    setTimeout(place, 450);   // إعادة الضبط بعد استقرار السكرول
-  }
+    if(window.requestAnimationFrame){ requestAnimationFrame(go); } else { setTimeout(go, 30); }
+  });
+
+  var act = null;
+  guard('القائمة', function(){
+    each(document.querySelectorAll('.side-item'), function(el, i){
+      if(i === idx) el.classList.add('on'); else el.classList.remove('on');
+    });
+    act = document.querySelector('.side-item.on');
+  });
+  guard('سكرول', function(){
+    if(act && act.scrollIntoView){
+      try{ act.scrollIntoView({behavior:'smooth', block:'nearest'}); }catch(e){ act.scrollIntoView(false); }
+    }
+  });
+  guard('المعيّن', function(){
+    var dot = document.getElementById('railDot');
+    var rail = document.querySelector('.rail');
+    if(dot && rail && act){
+      var place = function(){
+        var rr = rail.getBoundingClientRect();
+        var ar = act.getBoundingClientRect();
+        dot.style.top = (ar.top + ar.height/2 - rr.top) + 'px';
+      };
+      place();
+      setTimeout(function(){ guard('المعيّن٢', place); }, 450);   // إعادة الضبط بعد استقرار السكرول
+    }
+  });
 }
 
 function renderSide(){
@@ -614,18 +650,24 @@ function renderSide(){
 }
 
 function nextFeature(){
-  idx = (idx + 1) % news.length;
-  renderFeature();
+  guard('تبديل', function(){
+    if(!news.length) return;
+    idx = (idx + 1) % news.length;
+    renderFeature();
+  });
 }
 
 function init(){
+  // مؤقت التبديل يعمل مهما حصل (حتى لو تعذّر أي شيء آخر)
+  setInterval(nextFeature, ROTATE_MS);
   loadNews().then(function(){
-    renderSide();
-    renderFeature();
+    guard('renderSide', renderSide);
+    guard('renderFeature', renderFeature);
     window.__ready = true;
-    setInterval(nextFeature, ROTATE_MS);
     // إعادة سحب أحدث تقرير كل 15 دقيقة
-    setInterval(function(){ loadNews().then(renderSide); }, 15 * 60 * 1000);
+    setInterval(function(){
+      loadNews().then(function(){ guard('renderSide', renderSide); });
+    }, 15 * 60 * 1000);
   });
 }
 // حارس: لو بقيت الصفحة على «جارٍ التحميل» لأي سبب، نعيد تحميلها تلقائياً
