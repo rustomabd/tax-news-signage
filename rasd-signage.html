@@ -1,13 +1,16 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
+<link rel="preload" href="Lusail__Bold.otf" as="font" type="font/otf" crossorigin>
+<link rel="preload" href="Lusail__Black.otf" as="font" type="font/otf" crossorigin>
+<link rel="preload" href="feed.json" as="fetch" crossorigin>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>راصد الأخبار الضريبية — شاشة العرض</title>
 <style>
-@font-face { font-family:'Lusail'; src:url('Lusail__Regular.otf') format('opentype'); font-weight:400; }
-@font-face { font-family:'Lusail'; src:url('Lusail__Bold.otf') format('opentype'); font-weight:700; }
-@font-face { font-family:'Lusail'; src:url('Lusail__Black.otf') format('opentype'); font-weight:900; }
+@font-face { font-family:'Lusail'; src:url('Lusail__Regular.otf') format('opentype'); font-weight:400; font-display:swap; }
+@font-face { font-family:'Lusail'; src:url('Lusail__Bold.otf') format('opentype'); font-weight:700; font-display:swap; }
+@font-face { font-family:'Lusail'; src:url('Lusail__Black.otf') format('opentype'); font-weight:900; font-display:swap; }
 
 :root{
   --u:1vh;   /* وحدة القياس: أفقي = ارتفاع الشاشة · طولي = عرضها */
@@ -64,13 +67,12 @@ body{
 .live-badge .live-dot{
   width:calc(1.3 * var(--u));height:calc(1.3 * var(--u));border-radius:2px;background:#1ea952;
   transform:rotate(45deg);
-  box-shadow:0 0 0 0 rgba(30,169,82,.7);animation:pulse 1.8s infinite;
+  animation:pulse 2s ease-in-out infinite;
 }
 .live-badge .live-txt{font-size:calc(2.1 * var(--u));font-weight:900;color:var(--gold-light);}
 @keyframes pulse{
-  0%{box-shadow:0 0 0 0 rgba(30,169,82,.6);}
-  70%{box-shadow:0 0 0 calc(1.5 * var(--u)) rgba(30,169,82,0);}
-  100%{box-shadow:0 0 0 0 rgba(30,169,82,0);}
+  0%,100%{opacity:1;}
+  50%{opacity:.35;}
 }
 
 /* ============ المحتوى ============ */
@@ -138,7 +140,7 @@ body{
 .side-head .globe{width:calc(2.9 * var(--u));height:calc(2.9 * var(--u));flex-shrink:0;display:block;}
 .side-items{
   display:flex;flex-direction:column;gap:calc(1.1 * var(--u));flex:1;
-  overflow-y:auto;overflow-x:hidden;scroll-behavior:smooth;
+  overflow-y:auto;overflow-x:hidden;
   padding:calc(0.6 * var(--u)) calc(2 * var(--u)) calc(0.6 * var(--u)) calc(1.8 * var(--u));   /* مساحة يمين لطرف البطاقة المكبّرة + يسار للسهم */
 }
 .side-items{scrollbar-width:none;}
@@ -150,7 +152,7 @@ body{
 .rail-dot{position:absolute;left:50%;top:0;transform:translate(-50%,-50%) rotate(45deg);
   width:calc(1.7 * var(--u));height:calc(1.7 * var(--u));background:var(--gold);border-radius:2px;
   box-shadow:0 calc(0.3 * var(--u)) calc(0.9 * var(--u)) rgba(0,0,0,0.35);
-  transition:top .6s cubic-bezier(.22,.61,.36,1);}
+}
 .side-item{
   display:flex;align-items:flex-start;gap:0.8vw;
   /* زجاجية */
@@ -161,8 +163,6 @@ body{
   border-radius:calc(1.5 * var(--u));
   padding:calc(1.5 * var(--u)) 1.3vw;
   box-shadow:inset 0 1px 0 rgba(255,255,255,0.10), 0 6px 18px rgba(0,0,0,0.18);
-  transition:transform .4s cubic-bezier(.22,.61,.36,1), background .4s ease, box-shadow .4s ease, border-color .4s ease;
-  animation:itemIn .5s cubic-bezier(.22,.61,.36,1) both;
 }
 /* العلامة بجانب كل عنوان (بدل الأقواس) */
 .side-item .si-mark{color:var(--gold-light);font-size:calc(1.5 * var(--u));line-height:1.7;flex-shrink:0;}
@@ -212,8 +212,8 @@ body{
 
 /* أنيميشن */
 @keyframes itemIn{from{opacity:0;translate:0 calc(1.3 * var(--u));}to{opacity:1;translate:0 0;}}
-@keyframes fadeSlideUp{from{opacity:0;transform:translateY(calc(1.8 * var(--u)));}to{opacity:1;transform:translateY(0);}}
-.reveal{animation:fadeSlideUp .6s cubic-bezier(.22,.61,.36,1) both;animation-delay:var(--d,0s);}
+@keyframes fadeSlideUp{from{opacity:0;}to{opacity:1;}}
+.reveal{animation:fadeSlideUp .2s ease-out both;}
 
 /* ============ شاشة طولية (1080×1920) ============ */
 @media (orientation:portrait){
@@ -416,15 +416,28 @@ function unwrapSafe(u){
   return u;
 }
 
-// توليد رمز QR لرابط الخبر (محلياً بالكامل)
-function renderQR(url){
-  const box = document.getElementById('qrBox');
-  box.innerHTML = '';
-  const target = url || 'https://www.gta.gov.qa';
-  if(window.QRCode){
-    new QRCode(box, { text: target, width:260, height:260,
+// توليد رمز QR لرابط الخبر (محلياً بالكامل) — يُخزَّن لكل رابط فلا يُعاد رسمه عند كل عرض
+var qrCache = {};
+function qrNodeFor(url){
+  var target = url || 'https://www.gta.gov.qa';
+  if(!qrCache[target]){
+    var d = document.createElement('div');
+    new QRCode(d, { text: target, width:260, height:260,
       colorDark:'#111', colorLight:'#fff', correctLevel: QRCode.CorrectLevel.M });
+    qrCache[target] = d;
   }
+  return qrCache[target];
+}
+function renderQR(url){
+  var box = document.getElementById('qrBox');
+  box.innerHTML = '';
+  if(window.QRCode){ box.appendChild(qrNodeFor(url)); }
+}
+// تجهيز كل رموز QR مسبقاً على دفعات صغيرة بعد ظهور الصفحة (لا يعطّل الشاشة)
+function prewarmQR(){
+  each(news, function(n, i){
+    setTimeout(function(){ guard('QR مسبق', function(){ if(window.QRCode) qrNodeFor(unwrapSafe(n.source)); }); }, 400 + i * 250);
+  });
 }
 
 // توحيد شكل الخبر داخلياً: {title, country, newspaper, desc, source}
@@ -482,34 +495,54 @@ function buildNews(j){
 
 function feedStamp(f){ return (f && f.updatedAt) ? String(f.updatedAt) : ''; }
 
-/* دالة التحميل — تقرأ المصادر معاً (بمهلة)، وتأخذ الأحدث؛ وإلا آخر نسخة محفوظة؛ وإلا العيّنة */
+var currentStamp = '', currentSig = '';
+
+// نطبّق التقرير؛ ترجع true إن تغيّرت قائمة الأخبار فعلاً
+function applyFeed(feed){
+  var list = buildNews(feed);
+  var sig = list.map(function(n){ return n.title; }).join('|');
+  if(sig === currentSig) return false;
+  news = list; currentSig = sig; fitCache = {};
+  if(idx >= news.length) idx = 0;
+  return true;
+}
+
+// يعرض التقرير فور وصوله إن كان أحدث من المعروض (أو مساوياً له)؛ ولا يعيد الرسم إن لم يتغيّر شيء
+function showFeed(feed, fromCache){
+  if(!feed || !feed.data || !feed.data.length) return;
+  var st = feedStamp(feed);
+  if(currentStamp && st < currentStamp) return;
+  var changed = applyFeed(feed);
+  currentStamp = st;
+  if(!fromCache){ try{ localStorage.setItem('rasd_last_feed', JSON.stringify(feed)); }catch(e){} }
+  if(changed || !window.__ready){
+    guard('renderSide', renderSide);
+    guard('renderFeature', renderFeature);
+    window.__ready = true;
+  }
+}
+
+function showSample(){
+  news = SAMPLE.Details.map(normalize).map(function(n){ return withDate(n, SAMPLE.PublishDate); });
+  reportDate = SAMPLE.PublishDate; idx = 0; fitCache = {};
+  guard('renderSide', renderSide);
+  guard('renderFeature', renderFeature);
+  window.__ready = true;
+}
+
+/* التحميل: كل مصدر مستقل — أسرعهم يُعرض فوراً، والأحدث يستبدله عند وصوله. لا ننتظر الجميع. */
 function loadNews(){
-  var tasks = FEED_SOURCES.map(function(u){
-    return getJSON(u, FETCH_TIMEOUT_MS).then(function(x){
-      return (x && x.data && x.data.length) ? x : null;
-    }).catch(function(e){ console.log('تعذّر المصدر', u, e.message); return null; });
-  });
-  return Promise.all(tasks).then(function(res){
-    var best = null, i;
-    for(i = 0; i < res.length; i++){
-      if(res[i] && (!best || feedStamp(res[i]) > feedStamp(best))) best = res[i];
-    }
-    if(best){
-      try{ localStorage.setItem('rasd_last_feed', JSON.stringify(best)); }catch(e){}
-      return best;
-    }
-    try{                                   // لا اتصال: آخر نسخة ناجحة محفوظة على الشاشة
-      var c = JSON.parse(localStorage.getItem('rasd_last_feed') || 'null');
-      if(c && c.data && c.data.length) return c;
-    }catch(e){}
-    return null;
-  }).then(function(feed){
-    if(feed){ news = buildNews(feed); }
-    else {
-      news = SAMPLE.Details.map(normalize).map(function(n){ return withDate(n, SAMPLE.PublishDate); });
-      reportDate = SAMPLE.PublishDate;
-    }
-    if(idx >= news.length) idx = 0;
+  return new Promise(function(resolve){
+    var settled = 0, total = FEED_SOURCES.length;
+    FEED_SOURCES.forEach(function(u){
+      getJSON(u, FETCH_TIMEOUT_MS)
+        .then(function(x){ showFeed(x, false); })
+        .catch(function(e){ logErr('مصدر ' + u + ': ' + (e && e.message ? e.message : e)); })
+        .then(function(){
+          settled++;
+          if(settled === total){ if(!window.__ready) showSample(); resolve(); }
+        });
+    });
   });
 }
 
@@ -520,34 +553,53 @@ function fmtDate(iso){
 }
 
 // خط المقال المتكيّف: أكبر حجم يناسب المساحة المتاحة (خبر قصير = خط أكبر)
+var fitCache = {};
 function fitExcerpt(){
-  const el = document.getElementById('fExcerpt');
-  const portrait = matchMedia('(orientation:portrait)').matches;
-  let lo = portrait ? 2.4 : 2.6, hi = 4.4;
-  const px = v => 'calc(' + v + ' * var(--u))';
+  var el = document.getElementById('fExcerpt');
+  var key = idx + '|' + (el.textContent||'').length + '|' + window.innerWidth + 'x' + window.innerHeight;
+  var hit = fitCache[key];
+  if(hit){
+    el.style.fontSize = hit.fs;
+    if(hit.lines){
+      el.style.setProperty('display', '-webkit-box');
+      el.style.setProperty('-webkit-box-orient', 'vertical');
+      el.style.setProperty('-webkit-line-clamp', String(hit.lines));
+      el.style.maxHeight = hit.mh;
+    } else {
+      el.style.display = ''; el.style.maxHeight = '';
+      el.style.removeProperty('-webkit-line-clamp'); el.style.removeProperty('-webkit-box-orient');
+    }
+    return;
+  }
+  var portrait = matchMedia('(orientation:portrait)').matches;
+  var lo = portrait ? 2.4 : 2.6, hi = 4.4;
+  var px = function(v){ return 'calc(' + v + ' * var(--u))'; };
   // إعادة الضبط (إلغاء أي اقتطاع سابق)
-  el.style.display = ''; el.style.webkitLineClamp = ''; el.style.webkitBoxOrient = ''; el.style.maxHeight = '';
+  el.style.display = ''; el.style.maxHeight = '';
+  el.style.removeProperty('-webkit-line-clamp'); el.style.removeProperty('-webkit-box-orient');
   el.style.fontSize = px(lo);
   if (el.scrollHeight <= el.clientHeight + 1) {
-    for (let i = 0; i < 8; i++) {
-      const mid = (lo + hi) / 2;
+    for (var i = 0; i < 6; i++) {
+      var mid = (lo + hi) / 2;
       el.style.fontSize = px(mid);
       if (el.scrollHeight > el.clientHeight + 1) hi = mid; else lo = mid;
     }
     el.style.fontSize = px(lo);
+    fitCache[key] = { fs: px(lo), lines: 0 };
     return;
   }
-  // حتى الأصغر لا يتسع: نقتطع عند آخر سطر كامل مع «…» بدل قصّ نصف سطر
-  const lh = parseFloat(getComputedStyle(el).lineHeight);
-  const lines = Math.max(1, Math.floor(el.clientHeight / lh));
+  // حتى الأصغر لا يتسع: نقتطع عند آخر سطر كامل بدل قصّ نصف سطر
+  var lh = parseFloat(getComputedStyle(el).lineHeight);
+  var lines = Math.max(1, Math.floor(el.clientHeight / lh));
   el.style.setProperty('display', '-webkit-box');
   el.style.setProperty('-webkit-box-orient', 'vertical');
   el.style.setProperty('-webkit-line-clamp', String(lines));
-  el.style.maxHeight = (lines * lh) + 'px';   // ضمان: لا يظهر أي جزء من سطر مقطوع
+  el.style.maxHeight = (lines * lh) + 'px';
+  fitCache[key] = { fs: px(lo), lines: lines, mh: (lines * lh) + 'px' };
 }
-window.addEventListener('resize', fitExcerpt);
+window.addEventListener('resize', function(){ fitCache = {}; fitExcerpt(); });
 // أعد الحساب بعد اكتمال تحميل خط Lusail (قبلها تكون القياسات غير دقيقة)
-if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitExcerpt);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(function(){ fitCache = {}; fitExcerpt(); });
 
 // تنفيذ آمن: أي خطأ في مقطع يُسجَّل ولا يوقف بقية الكود (مهم للمتصفحات القديمة)
 function guard(label, fn){
@@ -591,7 +643,7 @@ function renderFeature(){
     var els = [document.querySelector('.meta'), document.getElementById('fTitle'), document.getElementById('fExcerpt')];
     each(els, function(el, i){
       el.classList.remove('reveal'); void el.offsetWidth;
-      el.style.setProperty('--d', (i*0.09)+'s');
+      
       el.classList.add('reveal');
     });
   });
@@ -601,7 +653,7 @@ function renderFeature(){
     bar.style.transition = 'none';
     bar.style.width = '0';
     var go = function(){
-      bar.style.transition = 'width ' + ROTATE_MS + 'ms linear';
+      bar.style.transition = 'width ' + ROTATE_MS + 'ms steps(24, end)';
       bar.style.width = '100%';
     };
     if(window.requestAnimationFrame){ requestAnimationFrame(go); } else { setTimeout(go, 30); }
@@ -616,7 +668,7 @@ function renderFeature(){
   });
   guard('سكرول', function(){
     if(act && act.scrollIntoView){
-      try{ act.scrollIntoView({behavior:'smooth', block:'nearest'}); }catch(e){ act.scrollIntoView(false); }
+      try{ act.scrollIntoView({block:'nearest'}); }catch(e){ act.scrollIntoView(false); }
     }
   });
   guard('المعيّن', function(){
@@ -629,7 +681,7 @@ function renderFeature(){
         dot.style.top = (ar.top + ar.height/2 - rr.top) + 'px';
       };
       place();
-      setTimeout(function(){ guard('المعيّن٢', place); }, 450);   // إعادة الضبط بعد استقرار السكرول
+      setTimeout(function(){ guard('المعيّن٢', place); }, 80);   // إعادة ضبط سريعة بعد استقرار التمرير
     }
   });
 }
@@ -640,7 +692,6 @@ function renderSide(){
   news.forEach((n,i)=>{
     const d = document.createElement('div');
     d.className = 'side-item' + (i===idx?' on':'');
-    d.style.animationDelay = (i*0.06)+'s';   // دخول متدرّج
     d.innerHTML = '<div class="si-body">'
                 +   '<div class="si-src">'+flagImg(n.country)+'<bdi class="si-np">'+(n.newspaper||'')+'</bdi><span class="si-sep">·</span><bdi>'+(n.country||'')+'</bdi></div>'
                 +   '<div class="si-title">'+(n.title||'')+'</div>'
@@ -660,15 +711,14 @@ function nextFeature(){
 function init(){
   // مؤقت التبديل يعمل مهما حصل (حتى لو تعذّر أي شيء آخر)
   setInterval(nextFeature, ROTATE_MS);
-  loadNews().then(function(){
-    guard('renderSide', renderSide);
-    guard('renderFeature', renderFeature);
-    window.__ready = true;
-    // إعادة سحب أحدث تقرير كل 15 دقيقة
-    setInterval(function(){
-      loadNews().then(function(){ guard('renderSide', renderSide); });
-    }, 15 * 60 * 1000);
-  });
+  // آخر نسخة ناجحة محفوظة على الشاشة: تظهر فوراً قبل أن تنتهي الشبكة
+  try{
+    var c = JSON.parse(localStorage.getItem('rasd_last_feed') || 'null');
+    if(c) showFeed(c, true);
+  }catch(e){}
+  loadNews().then(function(){ guard('prewarm', prewarmQR); });
+  // إعادة سحب أحدث تقرير كل 15 دقيقة (لا يعيد الرسم إلا إن تغيّر شيء)
+  setInterval(loadNews, 15 * 60 * 1000);
 }
 // حارس: لو بقيت الصفحة على «جارٍ التحميل» لأي سبب، نعيد تحميلها تلقائياً
 setTimeout(function(){ if(!window.__ready) location.reload(); }, 30000);
