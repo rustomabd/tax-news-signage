@@ -364,7 +364,8 @@ let news = [];
 let reportDate = "";
 let idx = 0;
 const MIN_NEWS = 4;   // الحد الأدنى للأخبار المعروضة (نكمّل من التقارير القديمة)
-const ROTATE_MS = 12000; // مدة عرض كل خبر رئيسي
+const MAX_NEWS = 5;   // الحد الأقصى للأخبار على الشاشة (الأحدث أولاً)
+const ROTATE_MS = 10000; // مدة عرض كل خبر رئيسي (10 ثوانٍ)
 
 // لون شارة الدولة
 function countryClass(c){
@@ -475,7 +476,7 @@ function withDate(n, d){
 function buildNews(j){
   reportDate = j.updatedAt || new Date().toISOString();
   var out = [], seen = {}, k, a, n, h, hd;
-  for(k = 0; k < j.data.length; k++){
+  for(k = 0; k < j.data.length && out.length < MAX_NEWS; k++){
     n = normalize(j.data[k]);
     if(!n.title || seen[n.title]) continue;
     seen[n.title] = true; out.push(withDate(n, reportDate));
