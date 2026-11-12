@@ -1,16 +1,15 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<link rel="preload" href="Lusail__Bold.otf" as="font" type="font/otf" crossorigin>
-<link rel="preload" href="Lusail__Black.otf" as="font" type="font/otf" crossorigin>
-<link rel="preload" href="feed.json" as="fetch" crossorigin>
+<link rel="preload" href="assets/lusail-bold.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/lusail-black.woff2" as="font" type="font/woff2" crossorigin>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>راصد الأخبار الضريبية — شاشة العرض</title>
 <style>
-@font-face { font-family:'Lusail'; src:url('Lusail__Regular.otf') format('opentype'); font-weight:400; font-display:swap; }
-@font-face { font-family:'Lusail'; src:url('Lusail__Bold.otf') format('opentype'); font-weight:700; font-display:swap; }
-@font-face { font-family:'Lusail'; src:url('Lusail__Black.otf') format('opentype'); font-weight:900; font-display:swap; }
+@font-face { font-family:'Lusail'; src:url('assets/lusail-regular.woff2') format('woff2'), url('Lusail__Regular.otf') format('opentype'); font-weight:400; font-display:swap; }
+@font-face { font-family:'Lusail'; src:url('assets/lusail-bold.woff2') format('woff2'), url('Lusail__Bold.otf') format('opentype'); font-weight:700; font-display:swap; }
+@font-face { font-family:'Lusail'; src:url('assets/lusail-black.woff2') format('woff2'), url('Lusail__Black.otf') format('opentype'); font-weight:900; font-display:swap; }
 
 :root{
   --u:1vh;   /* وحدة القياس: أفقي = ارتفاع الشاشة · طولي = عرضها */
@@ -256,7 +255,7 @@ body{
   <!-- ===== الهيدر ===== -->
   <header class="topbar">
     <div class="brand-wrap">
-      <img class="gta-logo" src="gta-logo-white.png" alt="الهيئة العامة للضرائب">
+      <img class="gta-logo" data-src="assets/gta-logo.png" alt="الهيئة العامة للضرائب">
       <div class="brand-title">
         <h1>التقرير الإعلامي اليومي</h1>
         <div class="brand-sub">رصد إعلامي يومي للأخبار المتعلقة بالضرائب</div>
@@ -709,7 +708,19 @@ function nextFeature(){
   });
 }
 
+function loadLogo(){
+  // الشعار يظهر في الشاشة الطولية فقط، فلا نحمّله في الأفقية (توفير باندويدث)
+  try{
+    var img = document.querySelector('.gta-logo');
+    if(img && !img.getAttribute('src') && matchMedia('(orientation:portrait)').matches){
+      img.setAttribute('src', img.getAttribute('data-src'));
+    }
+  }catch(e){ logErr('شعار: ' + e.message); }
+}
+window.addEventListener('resize', loadLogo);
+
 function init(){
+  loadLogo();
   // مؤقت التبديل يعمل مهما حصل (حتى لو تعذّر أي شيء آخر)
   setInterval(nextFeature, ROTATE_MS);
   // آخر نسخة ناجحة محفوظة على الشاشة: تظهر فوراً قبل أن تنتهي الشبكة
@@ -722,7 +733,17 @@ function init(){
   setInterval(loadNews, 15 * 60 * 1000);
 }
 // حارس: لو بقيت الصفحة على «جارٍ التحميل» لأي سبب، نعيد تحميلها تلقائياً
-setTimeout(function(){ if(!window.__ready) location.reload(); }, 30000);
+// مع تباعد متزايد (30ث ← دقيقة ← دقيقتان ← 5د ← 10د) حتى لا تُغرق شاشة عالقة الموقع بإعادة تحميل كل نصف دقيقة
+(function(){
+  var DELAYS = [30, 60, 120, 300, 600], n = 0, ok = true;
+  try{ n = parseInt(sessionStorage.getItem('rasd_wd') || '0', 10) || 0; }catch(e){ ok = false; }
+  var wait = ok ? DELAYS[Math.min(n, DELAYS.length - 1)] : 120;
+  setTimeout(function(){
+    if(window.__ready){ try{ sessionStorage.removeItem('rasd_wd'); }catch(e){} return; }
+    try{ sessionStorage.setItem('rasd_wd', String(n + 1)); }catch(e){}
+    location.reload();
+  }, wait * 1000);
+})();
 init();
 </script>
 </body>

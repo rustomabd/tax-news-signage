@@ -2,3 +2,20 @@
 # ونتجاهل تغييرات tax.json الخام (الفلو يكتبها كل ساعة) لتوفير الرصيد.
 [build]
   ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- . ':(exclude)tax.json'"
+
+# كاش: الأصول الثابتة (خطوط/شعار) لا تتغيّر أسماؤها → سنة كاملة بلا إعادة طلب.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# الصفحة والبيانات: كاش قصير يخفّف الطلبات المتكررة دون تأخير الأخبار.
+[[headers]]
+  for = "/rasd-signage.html"
+  [headers.values]
+    Cache-Control = "public, max-age=300"
+
+[[headers]]
+  for = "/feed.json"
+  [headers.values]
+    Cache-Control = "public, max-age=120"

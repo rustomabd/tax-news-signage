@@ -11,8 +11,10 @@ tax.json يحمل:
   - عدة تقارير في اليوم نفسه تُجمع أخبارها بدون تكرار العنوان."""
 import json, os, sys
 
-MAX_REPORTS = 12      # أقصى عدد أيام سابقة نحتفظ بها
-MAX_ARTICLES = 60     # أقصى عدد أخبار في الأرشيف
+MAX_REPORTS = 6       # أقصى عدد أيام سابقة نحتفظ بها
+MAX_ARTICLES = 10     # أقصى عدد أخبار في الأرشيف (الشاشة تحتاج 4–5 فقط)
+MAX_CURRENT = 6       # أقصى عدد أخبار من أحدث تقرير (الشاشة تعرض 5 كحد أقصى)
+MAX_DESC = 520        # أقصى طول للوصف (الصفحة تقتطع الوصف الطويل على أي حال)
 
 def load(path):
     try:
@@ -26,6 +28,16 @@ def title(a):
 
 def day(d):
     return str(d or "")[:10]
+
+def slim(a):
+    """نسخة أخف من الخبر: نفس الحقول، ووصف مقتطع عند حدّ كلمة. يصغّر feed.json لأن كل شاشة تحمّله باستمرار."""
+    b = dict(a)
+    for k in ("DescAR", "description", "desc"):
+        v = b.get(k)
+        if isinstance(v, str) and len(v) > MAX_DESC:
+            cut = v[:MAX_DESC].rsplit(" ", 1)[0].rstrip(" ,.;:،؛")
+            b[k] = cut + " [...]"
+    return b
 
 cur = load("tax.json")
 if not cur or not cur.get("data"):
@@ -80,15 +92,18 @@ for k in order[1:]:
         t = title(a)
         if t and t not in seen:
             seen.add(t); items.append(a)
+    items = items[:max(0, MAX_ARTICLES - count)]
     if items:
         history.append({"date": days[k]["date"], "data": items}); count += len(items)
     if len(history) >= MAX_REPORTS or count >= MAX_ARTICLES:
         break
 
-feed = {"data": latest["data"], "updatedAt": latest["date"],
+latest_data = [slim(a) for a in latest["data"][:MAX_CURRENT]]
+history = [{"date": h["date"], "data": [slim(a) for a in h["data"]]} for h in history]
+feed = {"data": latest_data, "updatedAt": latest["date"],
         "source": cur.get("source", "GTA DailyReportAR"), "history": history}
 out = json.dumps(feed, ensure_ascii=False, indent=1)
 if os.path.exists("feed.json") and open("feed.json", encoding="utf-8").read() == out:
     print("لا تغيير في feed.json"); sys.exit(0)
 open("feed.json", "w", encoding="utf-8").write(out)
-print("تم بناء feed.json:", len(latest["data"]), "خبر حالي +", count, "في الأرشيف")
+print("تم بناء feed.json:", len(latest_data), "خبر حالي +", count, "في الأرشيف")
